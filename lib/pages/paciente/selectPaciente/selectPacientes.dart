@@ -39,7 +39,6 @@ class SeleccionPacientePage extends StatelessWidget {
                 onTap: () {
                   print('Paciente seleccionado: $pacienteNombre'); // Depuración
                   onPacienteSeleccionado(pacienteId, pacienteNombre); // Ejecutar el callback
-                  // Eliminar la línea de Navigator.pop() si lo estás llamando inmediatamente
                 },
 
               );
