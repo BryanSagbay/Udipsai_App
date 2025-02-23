@@ -102,6 +102,7 @@ class _AgregarPacienteScreenState extends State<AgregarPacienteScreen> {
                 },
               ),
               SizedBox(height: 20),
+
               // Botón para guardar
               ElevatedButton(
                 onPressed: () async {
