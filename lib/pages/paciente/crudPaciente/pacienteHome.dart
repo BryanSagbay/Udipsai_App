@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hc05_udipsai/components/itemPaciente.dart';
 import 'package:hc05_udipsai/models/pacientes.dart';
-import 'package:hc05_udipsai/pages/paciente/pacienteAgregar.dart';
-import 'package:hc05_udipsai/pages/paciente/pacienteEditar.dart';
+import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteAgregar.dart';
+import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteEditar.dart';
 import 'package:hc05_udipsai/services/firebase_service.dart';
 import 'package:provider/provider.dart';
 
@@ -33,8 +33,7 @@ class PacientesScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          EditarPacienteScreen(paciente: pacientes[index]),
+                      builder: (context) => EditarPacienteScreen(paciente: pacientes[index]),
                     ),
                   );
                 },

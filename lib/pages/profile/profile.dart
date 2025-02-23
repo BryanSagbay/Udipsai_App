@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hc05_udipsai/components/select.dart';
-import 'package:hc05_udipsai/services/selectPacientes.dart';
+import 'package:hc05_udipsai/pages/paciente/selectPaciente/selectPacientes.dart';
 import 'package:hc05_udipsai/pages/login/login.dart';
-import 'package:hc05_udipsai/pages/paciente/pacienteHome.dart';
+import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
+import 'package:hc05_udipsai/pages/test/Botones/inicioTest.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -56,13 +56,13 @@ class ProfileScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => SeleccionPacientePage(
-                      onPacienteSeleccionado: (pacienteId) {
-                        // Aquí puedes redirigir a la siguiente pantalla
-                        print('Paciente seleccionado: $pacienteId');
+                      onPacienteSeleccionado: (pacienteId, pacienteNombre) {
+                        print('Redirigiendo a TestPage con paciente: $pacienteNombre'); // Depuración
+                        // Redirigir a la página de tests con el paciente seleccionado
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ModulosScreen(pacienteId: pacienteId),
+                            builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre),
                           ),
                         );
                       },

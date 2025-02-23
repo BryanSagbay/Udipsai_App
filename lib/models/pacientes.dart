@@ -6,6 +6,7 @@ class Paciente {
   int edad;
   String genero;
   String telefono;
+  int contador; // Campo contador
 
   Paciente({
     this.id,
@@ -15,6 +16,7 @@ class Paciente {
     required this.edad,
     required this.genero,
     required this.telefono,
+    required this.contador, // Campo contador es requerido
   });
 
   factory Paciente.fromMap(Map<String, dynamic> data, String id) {
@@ -26,6 +28,7 @@ class Paciente {
       edad: data['edad'],
       genero: data['genero'],
       telefono: data['telefono'],
+      contador: data['contador'], // Campo contador
     );
   }
 
@@ -37,6 +40,7 @@ class Paciente {
       'edad': edad,
       'genero': genero,
       'telefono': telefono,
+      'contador': contador, // Campo contador
     };
   }
 }

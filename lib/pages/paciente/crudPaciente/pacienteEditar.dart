@@ -3,25 +3,41 @@ import 'package:hc05_udipsai/models/pacientes.dart';
 import 'package:hc05_udipsai/services/firebase_service.dart';
 import 'package:provider/provider.dart';
 
-class AgregarPacienteScreen extends StatefulWidget {
+class EditarPacienteScreen extends StatefulWidget {
+  final Paciente paciente;
+
+  EditarPacienteScreen({required this.paciente});
+
   @override
-  _AgregarPacienteScreenState createState() => _AgregarPacienteScreenState();
+  _EditarPacienteScreenState createState() => _EditarPacienteScreenState();
 }
 
-class _AgregarPacienteScreenState extends State<AgregarPacienteScreen> {
+class _EditarPacienteScreenState extends State<EditarPacienteScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nombreController = TextEditingController();
-  final _apellidoController = TextEditingController();
-  final _direccionController = TextEditingController();
-  final _edadController = TextEditingController();
-  final _generoController = TextEditingController();
-  final _telefonoController = TextEditingController();
+  late TextEditingController _nombreController;
+  late TextEditingController _apellidoController;
+  late TextEditingController _direccionController;
+  late TextEditingController _edadController;
+  late TextEditingController _generoController;
+  late TextEditingController _telefonoController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar los controladores con los valores actuales del paciente
+    _nombreController = TextEditingController(text: widget.paciente.nombre);
+    _apellidoController = TextEditingController(text: widget.paciente.apellido);
+    _direccionController = TextEditingController(text: widget.paciente.direccion);
+    _edadController = TextEditingController(text: widget.paciente.edad.toString());
+    _generoController = TextEditingController(text: widget.paciente.genero);
+    _telefonoController = TextEditingController(text: widget.paciente.telefono);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Agregar Paciente'),
+        title: Text('Editar Paciente'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,34 +117,48 @@ class _AgregarPacienteScreenState extends State<AgregarPacienteScreen> {
                 },
               ),
               SizedBox(height: 20),
-              // Botón para guardar
+              // Botón para actualizar
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    // Crear un objeto Paciente con los datos ingresados
+                    // Crear un objeto Paciente con los datos actualizados
                     final paciente = Paciente(
+                      id: widget.paciente.id, // Mantener el mismo ID
                       nombre: _nombreController.text,
                       apellido: _apellidoController.text,
                       direccion: _direccionController.text,
                       edad: int.parse(_edadController.text),
                       genero: _generoController.text,
                       telefono: _telefonoController.text,
+                      contador: widget.paciente.contador, // Mantener el mismo contador
                     );
 
-                    // Agregar el paciente a Firestore
+                    // Actualizar el paciente en Firestore
                     Provider.of<PacienteService>(context, listen: false)
-                        .agregarPaciente(paciente);
+                        .actualizarPaciente(paciente);
 
                     // Regresar a la pantalla anterior
                     Navigator.pop(context);
                   }
                 },
-                child: Text('Guardar'),
+                child: Text('Actualizar'),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // Limpiar los controladores cuando el widget se destruya
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _direccionController.dispose();
+    _edadController.dispose();
+    _generoController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
   }
 }

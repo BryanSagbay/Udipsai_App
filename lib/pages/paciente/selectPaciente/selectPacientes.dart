@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SeleccionPacientePage extends StatelessWidget {
-  final Function(String pacienteId) onPacienteSeleccionado;
+  final Function(String pacienteId, String pacienteNombre) onPacienteSeleccionado;
 
   SeleccionPacientePage({required this.onPacienteSeleccionado});
 
@@ -12,11 +12,8 @@ class SeleccionPacientePage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Seleccionar Paciente'),
       ),
-      body: FutureBuilder<QuerySnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('pacientes')
-            .orderBy('timestamp', descending: true) // Ordenar por timestamp
-            .get(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('pacientes').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -24,18 +21,27 @@ class SeleccionPacientePage extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(child: Text('Error al cargar pacientes'));
           }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('No hay pacientes registrados.'));
+          }
+
           final pacientes = snapshot.data!.docs;
           return ListView.builder(
             itemCount: pacientes.length,
             itemBuilder: (context, index) {
               final paciente = pacientes[index].data() as Map<String, dynamic>;
+              final pacienteId = pacientes[index].id;
+              final pacienteNombre = paciente['nombre'] ?? 'Sin Nombre';
+              final pacienteApellido = paciente['apellido'] ?? '';
+
               return ListTile(
-                title: Text('${paciente['nombre']} ${paciente['apellido']}'),
+                title: Text('$pacienteNombre $pacienteApellido'),
                 onTap: () {
-                  // Llama a la función callback con el ID del paciente seleccionado
-                  onPacienteSeleccionado(pacientes[index].id);
-                  Navigator.pop(context); // Cierra la página
+                  print('Paciente seleccionado: $pacienteNombre'); // Depuración
+                  onPacienteSeleccionado(pacienteId, pacienteNombre); // Ejecutar el callback
+                  // Eliminar la línea de Navigator.pop() si lo estás llamando inmediatamente
                 },
+
               );
             },
           );
