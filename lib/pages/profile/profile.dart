@@ -11,7 +11,6 @@ class ProfileScreen extends StatelessWidget {
 
   void signUserOut(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-    // Navegar a la página de inicio de sesión después de cerrar sesión
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -51,14 +50,12 @@ class ProfileScreen extends StatelessWidget {
               text: "Tests",
               icon: "assets/icons/Settings.svg",
               press: () {
-                // Navegar a la página de selección de pacientes
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SeleccionPacientePage(
                       onPacienteSeleccionado: (pacienteId, pacienteNombre) {
-                        print('Redirigiendo a TestPage con paciente: $pacienteNombre'); // Depuración
-                        // Redirigir a la página de tests con el paciente seleccionado
+                        print('Redirigiendo a TestPage con paciente: $pacienteNombre');
                         Navigator.push(
                           context,
                           MaterialPageRoute(
