@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559601591516",
+    "project_id": "app-udipsai-hc05",
+    "storage_bucket": "app-udipsai-hc05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559601591516:android:bed23a0f946523e4ce4019",
+        "android_client_info": {
+          "package_name": "com.example.hc05_udipsai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwp7QwwG6EBlbJNzmU3CEkRYiv5h5vD_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
