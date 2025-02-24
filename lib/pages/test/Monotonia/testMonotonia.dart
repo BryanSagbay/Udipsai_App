@@ -37,9 +37,9 @@ class _MonotoniaState extends State<Monotonia> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildButton("Botón 1", Colors.blue),
+                  _buildButton("Botón 1", Colors.red),
                   SizedBox(height: 10),
-                  _buildButton("Botón 3", Colors.red),
+                  _buildButton("Botón 3", Colors.blue),
                 ],
               ),
             ),
@@ -49,9 +49,9 @@ class _MonotoniaState extends State<Monotonia> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildButton("Botón 2", Colors.purple),
+                  _buildButton("Botón 2", Colors.yellow),
                   SizedBox(height: 10),
-                  _buildButton("Botón 4", Colors.teal),
+                  _buildButton("Botón 4", Colors.green),
                 ],
               ),
             ),
