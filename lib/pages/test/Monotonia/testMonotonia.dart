@@ -6,19 +6,32 @@ class Monotonia extends StatefulWidget {
 }
 
 class _MonotoniaState extends State<Monotonia> {
-  String _selectedOption = 'Aletoriamente';
-  final List<String> _options = ['Aletoriamente', 'Horario', 'Antihorario'];
+  String? _selectedOption;
+  final List<String> _options = ['Aleatoriamente', 'Horario', 'Antihorario'];
+  bool _isDropdownEnabled = false;
+  bool _areButtonsEnabled = false;
+  bool _showCancelButton = false;
+
+  void _resetState() {
+    setState(() {
+      _isDropdownEnabled = false;
+      _areButtonsEnabled = false;
+      _selectedOption = null;
+      _showCancelButton = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Monotonia y Reaccion Test"),
+        title: Text("Monotonía y Reacción Test"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
+            // Columna de botones de colores
             Expanded(
               flex: 1,
               child: Column(
@@ -27,7 +40,6 @@ class _MonotoniaState extends State<Monotonia> {
                   _buildButton("Botón 1", Colors.blue),
                   SizedBox(height: 10),
                   _buildButton("Botón 3", Colors.red),
-                  SizedBox(height: 10),
                 ],
               ),
             ),
@@ -40,16 +52,16 @@ class _MonotoniaState extends State<Monotonia> {
                   _buildButton("Botón 2", Colors.purple),
                   SizedBox(height: 10),
                   _buildButton("Botón 4", Colors.teal),
-                  SizedBox(height: 10),
                 ],
               ),
             ),
             SizedBox(width: 10),
+
+            // Columna de Dropdown y Card
             Expanded(
               flex: 4,
               child: Column(
                 children: [
-                  // Dropdown estilizado
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
@@ -60,13 +72,18 @@ class _MonotoniaState extends State<Monotonia> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedOption,
+                        hint: Text("Seleccione una opción"),
                         isExpanded: true,
-                        onChanged: (String? newValue) {
+                        onChanged: _isDropdownEnabled
+                            ? (String? newValue) {
                           setState(() {
                             _selectedOption = newValue!;
+                            _areButtonsEnabled = true; // Habilita los botones
                           });
-                        },
-                        items: _options.map<DropdownMenuItem<String>>((String value) {
+                        }
+                            : null,
+                        items:
+                        _options.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(value),
@@ -75,8 +92,8 @@ class _MonotoniaState extends State<Monotonia> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  // Card
+                  SizedBox(height: 20),
+
                   Expanded(
                     child: Card(
                       elevation: 5,
@@ -87,7 +104,9 @@ class _MonotoniaState extends State<Monotonia> {
                         padding: const EdgeInsets.all(18.0),
                         child: Center(
                           child: Text(
-                            "Contenido de la Card",
+                            _selectedOption != null
+                                ? "Modo seleccionado: $_selectedOption"
+                                : "Seleccione un modo",
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -100,22 +119,55 @@ class _MonotoniaState extends State<Monotonia> {
           ],
         ),
       ),
+
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            if (_showCancelButton)
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: FloatingActionButton(
+                  onPressed: _resetState,
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.cancel, color: Colors.white),
+                ),
+              ),
+            FloatingActionButton(
+              onPressed: _isDropdownEnabled
+                  ? null
+                  : () {
+                setState(() {
+                  _isDropdownEnabled = true;
+                  _showCancelButton = true;
+                });
+              },
+              backgroundColor: _isDropdownEnabled ? Colors.grey : Colors.blue,
+              child: Icon(Icons.play_arrow, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
   Widget _buildButton(String text, Color color) {
     return SizedBox(
-      width: 195,
-      height: 155,
+      width: 200,
+      height: 200,
       child: ElevatedButton(
-        onPressed: () {
+        onPressed: _areButtonsEnabled
+            ? () {
           print("$text presionado");
-        },
+        }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: Text(text, style: TextStyle(fontSize: 14, color: Colors.white)),
