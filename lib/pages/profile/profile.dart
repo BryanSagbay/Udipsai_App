@@ -5,7 +5,7 @@ import 'package:hc05_udipsai/pages/paciente/selectPaciente/selectPacientes.dart'
 import 'package:hc05_udipsai/pages/login/login.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
 import 'package:hc05_udipsai/pages/settings/settings.dart';
-import 'package:hc05_udipsai/pages/test/Botones/inicioTest.dart';
+import 'package:hc05_udipsai/pages/test/homeTest/inicioTest.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -34,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ProfileMenu(
               text: "My Account",
-              icon: "assets/icons/User Icon.svg",
+              icon: "lib/icons/gear-wide-connected.svg",
               press: () => {
                 Navigator.push(
                   context,
@@ -44,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             ProfileMenu(
               text: "Pacientes",
-              icon: "assets/icons/Bell.svg",
+              icon: "lib/icons/person-rolodex.svg",
               press: () {
                 Navigator.push(
                   context,
@@ -54,15 +54,15 @@ class ProfileScreen extends StatelessWidget {
             ),
             ProfileMenu(
               text: "Tests",
-              icon: "assets/icons/Settings.svg",
+              icon: "lib/icons/menu-down.svg",
               press: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SeleccionPacientePage(
                       onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) {
-                        print('Redirigiendo a TestPage con paciente: $pacienteNombre $pacienteApellido'); // Depuración
-                        Navigator.push( // Usamos push en vez de pushReplacement
+                        print('Redirigiendo a TestPage con paciente: $pacienteNombre $pacienteApellido');
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => TestPage(
@@ -80,12 +80,12 @@ class ProfileScreen extends StatelessWidget {
             ),
             ProfileMenu(
               text: "Soporte TI",
-              icon: "assets/icons/Question mark.svg",
+              icon: "lib/icons/pc-display.svg",
               press: () {},
             ),
             ProfileMenu(
               text: "Logout",
-              icon: "assets/icons/Question mark.svg",
+              icon: "lib/icons/box-arrow-left.svg",
               press: () => signUserOut(context),
             ),
           ],
@@ -152,7 +152,7 @@ class ProfileMenu extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextButton(
         style: TextButton.styleFrom(
-          foregroundColor: const Color(0xFFFF7643),
+          foregroundColor: const Color(0xFF930925),
           padding: const EdgeInsets.all(20),
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -164,7 +164,7 @@ class ProfileMenu extends StatelessWidget {
             SvgPicture.asset(
               icon,
               colorFilter:
-              const ColorFilter.mode(Color(0xFFFF7643), BlendMode.srcIn),
+              const ColorFilter.mode(Color(0xFF930925), BlendMode.srcIn),
               width: 22,
             ),
             const SizedBox(width: 20),

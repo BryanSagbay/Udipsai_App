@@ -43,7 +43,6 @@ class TestPage extends StatelessWidget {
                   ),
                   Text(
                     "$pacienteNombre $pacienteApellido",
-                    // Nombre y apellido del paciente
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -88,19 +87,19 @@ class TestPage extends StatelessWidget {
 
           switch (label) {
             case 'Test 1':
-              nextPage = Monotonia(testName: label);
+              nextPage = Monotonia();
               break;
             case 'Test 2':
               nextPage = test2();
               break;
             case 'Test 3':
-              nextPage = test3(testName: label);
+              nextPage = test3();
               break;
             case 'Test 4':
-              nextPage = test4(testName: label);
+              nextPage = test4();
               break;
             default:
-              nextPage = Monotonia(testName: label);
+              nextPage = Monotonia();
           }
 
           Navigator.push(

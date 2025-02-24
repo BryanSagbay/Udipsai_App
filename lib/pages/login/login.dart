@@ -7,7 +7,6 @@ import 'package:hc05_udipsai/pages/profile/profile.dart';
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
-  // controladores de texto
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -18,13 +17,11 @@ class LoginPage extends StatelessWidget {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      // Navegar a la página de inicio después de iniciar sesión
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => ProfileScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      // Manejar errores de autenticación
       showDialog(
         context: context,
         builder: (context) {
@@ -55,11 +52,10 @@ class LoginPage extends StatelessWidget {
               children: [
                 const SizedBox(height: 50),
 
-                // logo reemplazado por una imagen
                 Image.asset(
-                  'lib/images/ucacue.png',  // Ruta de tu imagen
-                  height: 120,  // Ajusta el tamaño según lo necesites
-                  width: 100,   // Ajusta el tamaño según lo necesites
+                  'lib/images/ucacue.png',
+                  height: 120,
+                  width: 100,
                 ),
 
                 const SizedBox(height: 10),
