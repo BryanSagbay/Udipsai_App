@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SeleccionPacientePage extends StatelessWidget {
-  final Function(String pacienteId, String pacienteNombre) onPacienteSeleccionado;
+
+  final Function(String pacienteId, String pacienteNombre, String pacienteApellido) onPacienteSeleccionado;
 
   SeleccionPacientePage({required this.onPacienteSeleccionado});
 
@@ -37,10 +38,9 @@ class SeleccionPacientePage extends StatelessWidget {
               return ListTile(
                 title: Text('$pacienteNombre $pacienteApellido'),
                 onTap: () {
-                  print('Paciente seleccionado: $pacienteNombre'); // Depuración
-                  onPacienteSeleccionado(pacienteId, pacienteNombre); // Ejecutar el callback
+                  print('Paciente seleccionado: $pacienteNombre $pacienteApellido'); // Depuración
+                  onPacienteSeleccionado(pacienteId, pacienteNombre, pacienteApellido); // Pasar también el apellido
                 },
-
               );
             },
           );

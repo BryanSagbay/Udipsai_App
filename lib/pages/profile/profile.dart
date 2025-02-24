@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hc05_udipsai/pages/paciente/selectPaciente/selectPacientes.dart';
 import 'package:hc05_udipsai/pages/login/login.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
+import 'package:hc05_udipsai/pages/settings/settings.dart';
 import 'package:hc05_udipsai/pages/test/Botones/inicioTest.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -34,7 +35,12 @@ class ProfileScreen extends StatelessWidget {
             ProfileMenu(
               text: "My Account",
               icon: "assets/icons/User Icon.svg",
-              press: () => {},
+              press: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Settings()),
+                )
+              },
             ),
             ProfileMenu(
               text: "Pacientes",
@@ -54,12 +60,16 @@ class ProfileScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => SeleccionPacientePage(
-                      onPacienteSeleccionado: (pacienteId, pacienteNombre) {
-                        print('Redirigiendo a TestPage con paciente: $pacienteNombre');
-                        Navigator.push(
+                      onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) {
+                        print('Redirigiendo a TestPage con paciente: $pacienteNombre $pacienteApellido'); // Depuración
+                        Navigator.push( // Usamos push en vez de pushReplacement
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre),
+                            builder: (context) => TestPage(
+                              pacienteId: pacienteId,
+                              pacienteNombre: pacienteNombre,
+                              pacienteApellido: pacienteApellido,
+                            ),
                           ),
                         );
                       },
