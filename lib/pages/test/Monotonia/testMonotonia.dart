@@ -31,7 +31,6 @@ class _MonotoniaState extends State<Monotonia> {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Columna de botones de colores
             Expanded(
               flex: 1,
               child: Column(
