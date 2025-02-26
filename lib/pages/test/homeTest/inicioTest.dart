@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/test2.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/test3.dart';
+import 'package:hc05_udipsai/pages/test/Monotonia/testPalanca.dart';
 import 'package:hc05_udipsai/pages/test/Monotonia/test4.dart';
 import 'package:hc05_udipsai/pages/test/Monotonia/testMonotonia.dart';
+import 'package:hc05_udipsai/pages/test/Monotonia/testRiel.dart';
 
 class TestPage extends StatefulWidget {
   final String pacienteId;
@@ -25,6 +25,7 @@ class _TestPageState extends State<TestPage> {
     String serviceUuid = "00001101-0000-1000-8000-00805f9b34fb";
     try {
       await _bluetoothClassicPlugin.connect(macAddress, serviceUuid);
+
       setState(() {
         _isConnected = true;
         _connectedDeviceAddress = macAddress;
@@ -110,10 +111,10 @@ class _TestPageState extends State<TestPage> {
                   crossAxisCount: 2,
                   childAspectRatio: 2.5,
                   children: [
-                    _buildTestButton('Test 1', Monotonia(), "98:D3:71:FD:80:8B"),
-                    _buildTestButton('Test 2', test2(), "MAC_ADDRESS_2"),
-                    _buildTestButton('Test 3', test3(), "MAC_ADDRESS_3"),
-                    _buildTestButton('Test 4', test4(), "MAC_ADDRESS_4"),
+                    _buildTestButton('Test Monotonía y Reaccion', Monotonia(), "98:D3:71:FD:80:8B"),
+                    _buildTestButton('Test del Riel', TestRiel(), "98:D3:31:F6:5D:9D"),
+                    _buildTestButton('Test de Palanca', TestPalanca(), "00:22:03:01:3C:45"),
+                    _buildTestButton('Test Monotonía y Tuercas', test4(), "98:D3:11:FC:3B:3D"),
                   ],
                 ),
               ),

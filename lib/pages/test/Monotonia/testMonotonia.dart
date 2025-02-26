@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 
 class Monotonia extends StatefulWidget {
   final BluetoothClassic bluetooth = BluetoothClassic();  // Bluetooth instance
@@ -14,8 +16,45 @@ class _MonotoniaState extends State<Monotonia> {
   bool _isDropdownEnabled = false;
   bool _areButtonsEnabled = false;
   bool _showCancelButton = false;
+  String _receivedData = '';
+  final ScrollController _scrollController = ScrollController();
 
-  // Función para enviar mensaje al Bluetooth
+  List<int> _byteBuffer = [];
+  final _utf8Decoder = utf8.decoder;
+
+  @override
+  void initState() {
+    super.initState();
+    _startBluetoothListener();
+  }
+
+  void _startBluetoothListener() {
+    widget.bluetooth.onDeviceDataReceived().listen((Uint8List data) {
+      _processIncomingData(data);
+    });
+  }
+
+  void _processIncomingData(Uint8List newData) {
+    _byteBuffer.addAll(newData); // Añadir nuevos datos al buffer
+
+    // Buscar delimitadores de fin de mensaje (ej. '\n')
+    int endIndex = _byteBuffer.lastIndexOf(10); // 10 = ASCII para '\n'
+
+    if (endIndex != -1) {
+      // Convertir la parte del buffer hasta el delimitador a string
+      String decoded = utf8.decode(_byteBuffer.sublist(0, endIndex));
+
+      // Actualizar el buffer para que contenga los datos restantes después del delimitador
+      _byteBuffer = _byteBuffer.sublist(endIndex + 1);
+
+      // Agregar los datos decodificados a la variable _receivedData
+      setState(() {
+        _receivedData += decoded.trim() + '\n'; // Usamos trim() para eliminar posibles saltos de línea extras
+      });
+    }
+  }
+
+
   Future<void> _sendBluetoothMessage(String message) async {
     try {
       await widget.bluetooth.write(message);
@@ -118,17 +157,23 @@ class _MonotoniaState extends State<Monotonia> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(18.0),
-                        child: Center(
-                          child: Text(
-                            _selectedOption != null
-                                ? "Modo seleccionado: $_selectedOption"
-                                : "Seleccione un modo",
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        child: SingleChildScrollView(  // Aquí agregamos el scroll
+                          child: Center(
+                            child: Text(
+                              _receivedData.isNotEmpty
+                                  ? _receivedData
+                                  : "Esperando datos del dispositivo...",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),
