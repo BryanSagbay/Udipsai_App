@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
 import 'package:hc05_udipsai/pages/test/Monotonia/testPalanca.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/test4.dart';
+import 'package:hc05_udipsai/pages/test/Monotonia/testTuercas.dart';
 import 'package:hc05_udipsai/pages/test/Monotonia/testMonotonia.dart';
 import 'package:hc05_udipsai/pages/test/Monotonia/testRiel.dart';
 
@@ -32,7 +32,7 @@ class _TestPageState extends State<TestPage> {
       });
       _showSnackBar('Conectado a $macAddress', Colors.green);
     } catch (e) {
-      _showSnackBar('Error al conectar: $e', Colors.red);
+      _showSnackBar('Error al conectar, esta fuera del alcance o revisa si esta encendido $e', Colors.red);
     }
   }
 
@@ -114,7 +114,7 @@ class _TestPageState extends State<TestPage> {
                     _buildTestButton('Test Monotonía y Reaccion', Monotonia(), "98:D3:71:FD:80:8B"),
                     _buildTestButton('Test del Riel', TestRiel(), "98:D3:31:F6:5D:9D"),
                     _buildTestButton('Test de Palanca', TestPalanca(), "00:22:03:01:3C:45"),
-                    _buildTestButton('Test Monotonía y Tuercas', test4(), "98:D3:11:FC:3B:3D"),
+                    _buildTestButton('Test Monotonía y Tuercas', TestTuercas(), "98:D3:11:FC:3B:3D"),
                   ],
                 ),
               ),
