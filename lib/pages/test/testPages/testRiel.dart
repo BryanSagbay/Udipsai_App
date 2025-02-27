@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
 import 'dart:typed_data';
@@ -9,9 +11,12 @@ class TestRiel extends StatefulWidget {
 }
 
 class _TestRielState extends State<TestRiel> {
-  final BluetoothClassic _bluetooth = BluetoothClassic(); // Instancia interna de Bluetooth
+
+  final BluetoothClassic _bluetooth = BluetoothClassic();
+
   String _receivedData = '';
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<Uint8List>? _bluetoothSubscription;
 
   List<int> _byteBuffer = [];
   final _utf8Decoder = utf8.decoder;
@@ -19,13 +24,28 @@ class _TestRielState extends State<TestRiel> {
   @override
   void initState() {
     super.initState();
-    _startBluetoothListener();
+
+    if (_bluetoothSubscription == null || _bluetoothSubscription!.isPaused) {
+      _startBluetoothListener();
+    }
   }
 
+
   void _startBluetoothListener() {
-    _bluetooth.onDeviceDataReceived().listen((Uint8List data) {
-      _processIncomingData(data);
-    });
+    _bluetoothSubscription?.cancel(); // Cancela cualquier suscripción anterior
+
+    _bluetoothSubscription = _bluetooth.onDeviceDataReceived().listen(
+          (Uint8List data) {
+        _processIncomingData(data);
+      },
+      onError: (error) {
+        print("Error en Bluetooth: $error");
+      },
+      onDone: () {
+        print("Stream finalizado.");
+      },
+      cancelOnError: true, // Cierra la suscripción si hay un error
+    );
   }
 
   void _processIncomingData(Uint8List newData) {
@@ -46,6 +66,12 @@ class _TestRielState extends State<TestRiel> {
         _receivedData += decoded.trim() + '\n'; // Usamos trim() para eliminar posibles saltos de línea extras
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _bluetoothSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _sendBluetoothMessage(String message) async {

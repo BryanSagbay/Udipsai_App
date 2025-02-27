@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/testPalanca.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/testTuercas.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/testMonotonia.dart';
-import 'package:hc05_udipsai/pages/test/Monotonia/testRiel.dart';
+import 'package:hc05_udipsai/pages/test/testPages/testPalanca.dart';
+import 'package:hc05_udipsai/pages/test/testPages/testMonotonia.dart';
+import 'package:hc05_udipsai/pages/test/testPages/testRiel.dart';
+import 'package:hc05_udipsai/pages/test/testPages/testTuercas.dart';
 
 class TestPage extends StatefulWidget {
   final String pacienteId;
@@ -50,6 +50,7 @@ class _TestPageState extends State<TestPage> {
       }
     }
   }
+
 
   void _showSnackBar(String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
