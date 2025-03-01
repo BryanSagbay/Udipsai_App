@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hc05_udipsai/pages/paciente/selectPaciente/selectPacientes.dart';
 import 'package:hc05_udipsai/pages/login/login.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
-import 'package:hc05_udipsai/pages/settings/settings.dart';
 import 'package:hc05_udipsai/pages/test/homeTest/inicioTest.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,8 +13,7 @@ class ProfileScreen extends StatefulWidget {
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
-    with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _textSlideAnimation;
@@ -27,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 3), // Animación de entrada y salida en 3 segundos
+      duration: Duration(seconds: 3),
     );
 
     _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
@@ -53,14 +51,12 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   void _startAnimationLoop() async {
     while (mounted) {
-      await _controller.forward(); // Aparece
-      await Future.delayed(Duration(seconds: 3)); // Pausa visible
-      await _controller.reverse(); // Desaparece
-      await Future.delayed(Duration(seconds: 1)); // Pausa antes de repetir
+      await _controller.forward();
+      await Future.delayed(Duration(seconds: 3));
+      await _controller.reverse();
+      await Future.delayed(Duration(seconds: 1));
     }
   }
-
-
 
   @override
   void dispose() {
@@ -89,17 +85,28 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             SizedBox(width: 20),
             Spacer(),
+            IconButton(
+              icon: SvgPicture.asset(
+                'lib/icons/box-arrow-left.svg',
+                width: 30,
+                height: 30,
+                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+              onPressed: () => signUserOut(context),
+            ),
           ],
         ),
       ),
       body: Stack(
         children: [
+          // Fondo de pantalla ajustado
           Positioned.fill(
             child: Image.asset(
               'lib/images/fondo.png',
               fit: BoxFit.cover,
             ),
           ),
+          // Contenido del texto y la águila
           Positioned(
             right: MediaQuery.of(context).size.width * 0.05,
             top: MediaQuery.of(context).size.height * 0.3,
@@ -160,54 +167,39 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Container(
       padding: EdgeInsets.all(10),
       color: Colors.black87,
+      height: 80, // Establece una altura fija para el footer
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Icon(Icons.arrow_back_ios, color: Colors.white),
-          Expanded(child: _buildCarousel(context)),
-          Icon(Icons.arrow_forward_ios, color: Colors.white),
+          _buildFooterButton(context, "lib/icons/person-rolodex.svg", "Pacientes", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => PacientesScreen()));
+          }),
+          _buildFooterButton(context, "lib/icons/menu-down.svg", "Tests", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SeleccionPacientePage(onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre, pacienteApellido: pacienteApellido)));
+            })));
+          }),
+          _buildFooterButton(context, "lib/icons/pc-display.svg", "Soporte TI", () {}),
         ],
       ),
     );
   }
 
-  Widget _buildCarousel(BuildContext context) {
-    return SizedBox(
-      height: 60,
-      child: PageView.builder(
-        controller: PageController(viewportFraction: 0.3),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return _buildCarouselItem(context, index);
-        },
-      ),
-    );
-  }
-
-  Widget _buildCarouselItem(BuildContext context, int index) {
-    final List<Map<String, dynamic>> buttons = [
-      {"icon": "lib/icons/gear-wide-connected.svg", "text": "My Account", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => Settings()))},
-      {"icon": "lib/icons/person-rolodex.svg", "text": "Pacientes", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => PacientesScreen()))},
-      {"icon": "lib/icons/menu-down.svg", "text": "Tests", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => SeleccionPacientePage(onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) => Navigator.push(context, MaterialPageRoute(builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre, pacienteApellido: pacienteApellido))))))},
-      {"icon": "lib/icons/pc-display.svg", "text": "Soporte TI", "action": () {}},
-      {"icon": "lib/icons/box-arrow-left.svg", "text": "Logout", "action": () => signUserOut(context)},
-    ];
-
-    final button = buttons[index];
+  Widget _buildFooterButton(BuildContext context, String iconPath, String text, VoidCallback onPressed) {
     return GestureDetector(
-      onTap: button["action"],
+      onTap: onPressed,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SvgPicture.asset(
-            button["icon"],
+            iconPath,
             width: 30,
             height: 30,
             colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           SizedBox(height: 3),
           Text(
-            button["text"],
+            text,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
