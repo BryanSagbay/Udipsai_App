@@ -7,8 +7,66 @@ import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
 import 'package:hc05_udipsai/pages/settings/settings.dart';
 import 'package:hc05_udipsai/pages/test/homeTest/inicioTest.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _textSlideAnimation;
+  late Animation<Offset> _aguilaSlideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3), // Animación de entrada y salida en 3 segundos
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _textSlideAnimation = Tween<Offset>(
+      begin: Offset(0.2, 0),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _aguilaSlideAnimation = Tween<Offset>(
+      begin: Offset(-1, 0),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _startAnimationLoop();
+  }
+
+  void _startAnimationLoop() async {
+    while (mounted) {
+      await _controller.forward(); // Aparece
+      await Future.delayed(Duration(seconds: 3)); // Pausa visible
+      await _controller.reverse(); // Desaparece
+      await Future.delayed(Duration(seconds: 1)); // Pausa antes de repetir
+    }
+  }
+
+
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void signUserOut(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -21,45 +79,93 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black87,
+        title: Row(
+          children: [
+            Image.asset(
+              'lib/images/definilylogo.png',
+              height: 230,
+            ),
+            SizedBox(width: 20),
+            Spacer(),
+          ],
+        ),
+      ),
       body: Stack(
         children: [
-          // Fondo de la página
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('lib/images/fondo.png'),
-                fit: BoxFit.cover,
+          Positioned.fill(
+            child: Image.asset(
+              'lib/images/fondo.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            right: MediaQuery.of(context).size.width * 0.05,
+            top: MediaQuery.of(context).size.height * 0.3,
+            child: FadeTransition(
+              opacity: _opacityAnimation,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SlideTransition(
+                    position: _textSlideAnimation,
+                    child: Text(
+                      "Universidad Católica \n          de Cuenca",
+                      style: TextStyle(
+                        fontSize: 53,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  SlideTransition(
+                    position: _textSlideAnimation,
+                    child: Text(
+                      "〉Sé un águila roja〈",
+                      style: TextStyle(
+                        fontSize: 43,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-
-          // Animación del águila
-          AnimatedPositioned(
-            duration: Duration(seconds: 2),
-            curve: Curves.easeOut,
-            top: 100,
-            left: MediaQuery.of(context).size.width / 2 - 100,
-            child: AnimatedOpacity(
-              duration: Duration(seconds: 2),
-              opacity: 1.0,
-              child: Image.asset(
-                'lib/images/aguila.png',
-                width: 300,
-                height: 300,
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.02,
+            top: MediaQuery.of(context).size.height * - 0.10,
+            child: FadeTransition(
+              opacity: _opacityAnimation,
+              child: SlideTransition(
+                position: _aguilaSlideAnimation,
+                child: Image.asset(
+                  'lib/images/aguila.png',
+                  width: 680,
+                  height: 680,
+                ),
               ),
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: _buildFooter(context),
+    );
+  }
 
-          // Contenido principal
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              children: [
-                const SizedBox(height: 300), // Espacio para la animación del águila
-                _buildCarousel(context), // Pasar el contexto aquí
-              ],
-            ),
-          ),
+  Widget _buildFooter(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(10),
+      color: Colors.black87,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.arrow_back_ios, color: Colors.white),
+          Expanded(child: _buildCarousel(context)),
+          Icon(Icons.arrow_forward_ios, color: Colors.white),
         ],
       ),
     );
@@ -67,82 +173,24 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildCarousel(BuildContext context) {
     return SizedBox(
-      height: 300, // Altura del carrusel
-      child: Column(
-        children: [
-          Expanded(
-            child: PageView.builder(
-              controller: PageController(viewportFraction: 0.3), // Vista previa de los botones adyacentes
-              itemCount: 5, // Número de botones
-              itemBuilder: (context, index) {
-                return _buildCarouselItem(context, index);
-              },
-            ),
-          ),
-          SizedBox(height: 20),
-        ],
+      height: 60,
+      child: PageView.builder(
+        controller: PageController(viewportFraction: 0.3),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return _buildCarouselItem(context, index);
+        },
       ),
     );
   }
 
   Widget _buildCarouselItem(BuildContext context, int index) {
     final List<Map<String, dynamic>> buttons = [
-      {
-        "icon": "lib/icons/gear-wide-connected.svg",
-        "text": "My Account",
-        "action": () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Settings()),
-          );
-        },
-      },
-      {
-        "icon": "lib/icons/person-rolodex.svg",
-        "text": "Pacientes",
-        "action": () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PacientesScreen()),
-          );
-        },
-      },
-      {
-        "icon": "lib/icons/menu-down.svg",
-        "text": "Tests",
-        "action": () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SeleccionPacientePage(
-                onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) {
-                  print('Redirigiendo a TestPage con paciente: $pacienteNombre $pacienteApellido');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TestPage(
-                        pacienteId: pacienteId,
-                        pacienteNombre: pacienteNombre,
-                        pacienteApellido: pacienteApellido,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
-        },
-      },
-      {
-        "icon": "lib/icons/pc-display.svg",
-        "text": "Soporte TI",
-        "action": () {},
-      },
-      {
-        "icon": "lib/icons/box-arrow-left.svg",
-        "text": "Logout",
-        "action": () => signUserOut(context),
-      },
+      {"icon": "lib/icons/gear-wide-connected.svg", "text": "My Account", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => Settings()))},
+      {"icon": "lib/icons/person-rolodex.svg", "text": "Pacientes", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => PacientesScreen()))},
+      {"icon": "lib/icons/menu-down.svg", "text": "Tests", "action": () => Navigator.push(context, MaterialPageRoute(builder: (context) => SeleccionPacientePage(onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) => Navigator.push(context, MaterialPageRoute(builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre, pacienteApellido: pacienteApellido))))))},
+      {"icon": "lib/icons/pc-display.svg", "text": "Soporte TI", "action": () {}},
+      {"icon": "lib/icons/box-arrow-left.svg", "text": "Logout", "action": () => signUserOut(context)},
     ];
 
     final button = buttons[index];
@@ -153,37 +201,17 @@ class ProfileScreen extends StatelessWidget {
         children: [
           SvgPicture.asset(
             button["icon"],
-            width: 50,
-            height: 50,
+            width: 30,
+            height: 30,
+            colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 3),
           Text(
             button["text"],
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // Asegura que el texto sea visible sobre cualquier fondo
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPageIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (index) {
-        return Container(
-          width: 8,
-          height: 8,
-          margin: EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: index == 0 ? Colors.blue : Colors.grey, // Cambia el color según la página activa
-          ),
-        );
-      }),
     );
   }
 }
