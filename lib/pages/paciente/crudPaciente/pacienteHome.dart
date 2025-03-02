@@ -50,7 +50,7 @@ class PacientesScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     title: Text(
-                      pacientes[index].nombre,
+                      '${pacientes[index].nombre} ${pacientes[index].apellido}', // Concatenamos nombre y apellido
                       style: TextStyle(color: Colors.black87), // Texto blanco
                     ),
                     subtitle: Text(
@@ -118,3 +118,4 @@ class PacientesScreen extends StatelessWidget {
     );
   }
 }
+
