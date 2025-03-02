@@ -27,10 +27,10 @@ class _TestPageState extends State<TestPage> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(seconds: 1), () {
+    Future.delayed(Duration(seconds: 2), () {
       setState(() {
         _opacity = 1.0;
-        _positionY = 100;
+        _positionY = -10.0;
       });
     });
   }
@@ -84,13 +84,31 @@ class _TestPageState extends State<TestPage> {
         return true;
       },
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black87,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white), // Flecha de retroceso blanca
+            onPressed: () {
+              Navigator.pop(context); // Acción para retroceder
+            },
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.end, // Esto coloca el logo en el extremo derecho
+            children: [
+              Image.asset(
+                'lib/images/definilylogo.png',
+                height: 250, // Ajusta el tamaño del logo
+              ),
+            ],
+          ),
+        ),
         body: Stack(
           children: [
             // Fondo de la página
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('lib/images/fondo.png'),
+                  image: AssetImage('lib/images/ofertafond.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -101,19 +119,19 @@ class _TestPageState extends State<TestPage> {
               duration: Duration(seconds: 2),
               curve: Curves.easeOut,
               top: _positionY,
-              left: MediaQuery.of(context).size.width / 2 - 100,
+              left: MediaQuery.of(context).size.width / 2 - 135,
               child: AnimatedOpacity(
                 duration: Duration(seconds: 2),
                 opacity: _opacity,
                 child: Image.asset(
                   'lib/images/aguila.png',
-                  width: 260,
-                  height: 230,
+                  width: 300,
+                  height: 370,
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -121,37 +139,72 @@ class _TestPageState extends State<TestPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3A3838),
+                      color: Colors.white70,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        const Text(
-                          "PACIENTE SELECCIONADO: \n",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Text(
-                          "${widget.pacienteNombre} ${widget.pacienteApellido}",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        // Información del paciente
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "PACIENTE SELECCIONADO:",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              Text(
+                                "${widget.pacienteNombre} ${widget.pacienteApellido}",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 0),
+                  SizedBox(height: 165),
+                  // Contenedor para los botones
                   Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildTestButton('lib/images/test/testMonotonia.png', Monotonia(), "98:D3:71:FD:80:8B"),
-                        _buildTestButton('lib/images/test/testRiel.png', TestRiel(), "98:D3:31:F6:5D:9D"),
-                        _buildTestButton('lib/images/test/testPalanca.png', TestPalanca(), "00:22:03:01:3C:45"),
-                        _buildTestButton('lib/images/test/testTuercas.png', TestTuercas(), "98:D3:11:FC:3B:3D"),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        children: [
+                          // Primera fila de botones
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTestButton('Test de Monotonía y Reaccion', 'lib/images/test/testMonotonia.png', Monotonia(), "98:D3:71:FD:80:8B"),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: _buildTestButton('Test de Riel', 'lib/images/test/testRiel.png', TestRiel(), "98:D3:31:F6:5D:9D"),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          // Segunda fila de botones
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTestButton('Test de Palanca', 'lib/images/test/testPalanca.png', TestPalanca(), "00:22:03:01:3C:45"),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: _buildTestButton('Test de Tuercas', 'lib/images/test/testTuercas.png', TestTuercas(), "98:D3:11:FC:3B:3D"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -163,30 +216,62 @@ class _TestPageState extends State<TestPage> {
     );
   }
 
-  Widget _buildTestButton(String imagePath, Widget nextPage, String macAddress) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () async {
-          await _connectToDevice(macAddress);
-          if (_isConnected) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => nextPage),
-            ).then((_) async {
-              await _disconnectDevice();
-            });
-          }
-        },
-        child: Container(
-          width: 140,
-          height: 280,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: AssetImage(imagePath),
-              fit: BoxFit.cover,
+  Widget _buildTestButton(String text, String imagePath, Widget nextPage, String macAddress) {
+    return GestureDetector(
+      onTap: () async {
+        await _connectToDevice(macAddress);
+        if (_isConnected) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => nextPage),
+          ).then((_) async {
+            await _disconnectDevice();
+          });
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white70,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3),
             ),
-          ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(70.0),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 18.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.scaleDown,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
