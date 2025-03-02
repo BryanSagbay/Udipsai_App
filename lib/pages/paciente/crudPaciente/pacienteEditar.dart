@@ -270,7 +270,7 @@ class _EditarPacienteScreenState extends State<EditarPacienteScreen> {
                                   // Mostrar alerta de éxito
                                   AwesomeDialog(
                                     context: context,
-                                    dialogType: DialogType.success, // Corregido: 'success' en minúscula
+                                    dialogType: DialogType.noHeader,
                                     animType: AnimType.bottomSlide, // Corregido: 'bottomSlide' en minúscula
                                     title: 'Éxito',
                                     desc: 'Paciente actualizado correctamente.',

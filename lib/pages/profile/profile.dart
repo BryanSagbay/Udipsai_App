@@ -5,6 +5,7 @@ import 'package:hc05_udipsai/pages/paciente/selectPaciente/selectPacientes.dart'
 import 'package:hc05_udipsai/pages/login/login.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteHome.dart';
 import 'package:hc05_udipsai/pages/test/homeTest/inicioTest.dart';
+import 'package:awesome_dialog/awesome_dialog.dart'; // Importar el paquete
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -65,11 +66,41 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   void signUserOut(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
+    // Mostrar alerta de confirmación personalizada
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.noHeader,
+      animType: AnimType.bottomSlide, // Animación de la alerta
+      title: 'Cerrar sesión',
+      desc: '¿Estás seguro de que deseas salir?',
+      btnCancelOnPress: () {
+        // No hacer nada si el usuario cancela
+      },
+      btnOkOnPress: () async {
+        // Cerrar sesión y redirigir al inicio
+        await FirebaseAuth.instance.signOut();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      },
+      btnCancelText: 'Cancelar', // Texto del botón Cancelar
+      btnOkText: 'Sí, salir', // Texto del botón OK
+      btnCancelColor: Colors.red, // Color del botón Cancelar
+      btnOkColor: Colors.green, // Color del botón OK
+      buttonsBorderRadius: BorderRadius.circular(10), // Bordes redondeados para los botones
+      padding: EdgeInsets.all(20), // Padding interno del diálogo
+      dialogBackgroundColor: Colors.white, // Fondo del diálogo
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
+      descTextStyle: TextStyle(
+        fontSize: 16,
+        color: Colors.black87,
+      ),
+    ).show();
   }
 
   @override
@@ -144,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
           Positioned(
             left: MediaQuery.of(context).size.width * 0.02,
-            top: MediaQuery.of(context).size.height * - 0.10,
+            top: MediaQuery.of(context).size.height * -0.10,
             child: FadeTransition(
               opacity: _opacityAnimation,
               child: SlideTransition(

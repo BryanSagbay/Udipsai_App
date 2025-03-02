@@ -254,15 +254,18 @@ class _AgregarPacienteScreenState extends State<AgregarPacienteScreen> {
                               // Mostrar alerta de éxito
                               AwesomeDialog(
                                 context: context,
-                                dialogType: DialogType.success, // Corregido: 'success' en minúscula
-                                animType: AnimType.bottomSlide, // Corregido: 'bottomSlide' en minúscula
+                                dialogType: DialogType.noHeader, // Este tipo elimina el icono del círculo
+                                animType: AnimType.bottomSlide,
                                 title: 'Éxito',
                                 desc: 'El paciente se ha guardado correctamente.',
                                 btnOkOnPress: () {
                                   // Regresar a la pantalla anterior después de presionar "OK"
                                   Navigator.pop(context);
                                 },
+                                dialogBorderRadius: BorderRadius.zero, // Elimina el borde redondeado
                               ).show();
+
+
                             }
                           },
                           style: ElevatedButton.styleFrom(
