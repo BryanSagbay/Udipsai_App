@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hc05_udipsai/components/itemPaciente.dart';
 import 'package:hc05_udipsai/models/pacientes.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteAgregar.dart';
 import 'package:hc05_udipsai/pages/paciente/crudPaciente/pacienteEditar.dart';
 import 'package:hc05_udipsai/services/firebase_service.dart';
 import 'package:provider/provider.dart';
+import 'package:awesome_dialog/awesome_dialog.dart'; // Importar el paquete
 
 class PacientesScreen extends StatelessWidget {
   @override
@@ -50,7 +50,7 @@ class PacientesScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     title: Text(
-                      '${pacientes[index].nombre} ${pacientes[index].apellido}', // Concatenamos nombre y apellido
+                      pacientes[index].nombre,
                       style: TextStyle(color: Colors.black87), // Texto blanco
                     ),
                     subtitle: Text(
@@ -90,8 +90,22 @@ class PacientesScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            Provider.of<PacienteService>(context, listen: false)
-                                .eliminarPaciente(pacientes[index].id!);
+                            AwesomeDialog(
+                              context: context,
+                              dialogType: DialogType.noHeader,
+                              animType: AnimType.bottomSlide,
+                              title: '¿Estás seguro?',
+                              desc: '¿Quieres eliminar este paciente?',
+                              btnCancelOnPress: () {
+                                // Acción cuando se cancela
+                              },
+                              btnOkOnPress: () {
+                                // Eliminar paciente si el usuario confirma
+                                Provider.of<PacienteService>(context, listen: false)
+                                    .eliminarPaciente(pacientes[index].id!);
+                              },
+                              dialogBorderRadius: BorderRadius.zero, // Elimina el borde redondeado
+                            ).show();
                           },
                           child: Icon(Icons.delete, color: Colors.white),
                         ),
@@ -118,4 +132,3 @@ class PacientesScreen extends StatelessWidget {
     );
   }
 }
-
