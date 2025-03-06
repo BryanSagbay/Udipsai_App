@@ -5,6 +5,9 @@ import 'package:hc05_udipsai/pages/test/testPages/testMonotonia.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testRiel.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testTuercas.dart';
 import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
+
+
 
 class TestPage extends StatefulWidget {
   final String pacienteId;
@@ -27,12 +30,23 @@ class _TestPageState extends State<TestPage> {
   @override
   void initState() {
     super.initState();
+    _requestBluetoothPermissions();
     Future.delayed(Duration(seconds: 2), () {
       setState(() {
         _opacity = 1.0;
         _positionY = -10.0;
       });
     });
+  }
+
+  Future<void> _requestBluetoothPermissions() async {
+    if (await Permission.bluetoothScan.request().isGranted &&
+        await Permission.bluetoothConnect.request().isGranted &&
+        await Permission.location.request().isGranted) {
+      print("Permisos concedidos ✅");
+    } else {
+      print("Permisos denegados ❌");
+    }
   }
 
   Future<void> _connectToDevice(String macAddress) async {
