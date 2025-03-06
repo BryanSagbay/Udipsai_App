@@ -101,7 +101,7 @@ class _TestPageState extends State<TestPage> {
         appBar: AppBar(
           backgroundColor: Colors.black87,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white), // Flecha de retroceso blanca
+            icon: Icon(Icons.arrow_back, color: Colors.black), // Flecha de retroceso blanca
             onPressed: () {
               Navigator.pop(context); // Acción para retroceder
             },
@@ -110,7 +110,7 @@ class _TestPageState extends State<TestPage> {
             mainAxisAlignment: MainAxisAlignment.end, // Esto coloca el logo en el extremo derecho
             children: [
               Image.asset(
-                'lib/images/definilylogo.png',
+                'assets/images/definilylogo.png',
                 height: 250, // Ajusta el tamaño del logo
               ),
             ],
@@ -122,7 +122,7 @@ class _TestPageState extends State<TestPage> {
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('lib/images/ofertafond.jpg'),
+                  image: AssetImage('assets/images/ofertafond.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -138,7 +138,7 @@ class _TestPageState extends State<TestPage> {
                 duration: Duration(seconds: 2),
                 opacity: _opacity,
                 child: Image.asset(
-                  'lib/images/aguila.png',
+                  'assets/images/aguila.png',
                   width: 300,
                   height: 370,
                 ),
@@ -165,12 +165,12 @@ class _TestPageState extends State<TestPage> {
                             children: [
                               const Text(
                                 "PACIENTE SELECCIONADO:",
-                                style: TextStyle(color: Colors.white),
+                                style: TextStyle(color: Colors.black),
                               ),
                               Text(
                                 "${widget.pacienteNombre} ${widget.pacienteApellido}",
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -193,11 +193,11 @@ class _TestPageState extends State<TestPage> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: _buildTestButton('Test de Monotonía y Reaccion', 'lib/images/test/testMonotonia.png', Monotonia(), "98:D3:71:FD:80:8B"),
+                                  child: _buildTestButton('Test de Monotonía', 'assets/images/test/testMonotonia.png', Monotonia(), "98:D3:71:FD:80:8B"),
                                 ),
                                 SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTestButton('Test de Riel', 'lib/images/test/testRiel.png', TestRiel(), "98:D3:31:F6:5D:9D"),
+                                  child: _buildTestButton('Sistema de Motrocidad', 'assets/images/test/testRiel.png', TestRiel(), "98:D3:31:F6:5D:9D"),
                                 ),
                               ],
                             ),
@@ -208,11 +208,11 @@ class _TestPageState extends State<TestPage> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: _buildTestButton('Test de Palanca', 'lib/images/test/testPalanca.png', TestPalanca(), "00:22:03:01:3C:45"),
+                                  child: _buildTestButton('Test de Palanca', 'assets/images/test/testPalanca.png', TestPalanca(), "00:22:03:01:3C:45"),
                                 ),
                                 SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTestButton('Test de Tuercas', 'lib/images/test/testTuercas.png', TestTuercas(), "98:D3:11:FC:3B:3D"),
+                                  child: _buildTestButton('Test de Bennett', 'assets/images/test/testTuercas.png', TestTuercas(), "98:D3:11:FC:3B:3D"),
                                 ),
                               ],
                             ),
@@ -265,9 +265,9 @@ class _TestPageState extends State<TestPage> {
                 child: Text(
                   text,
                   style: TextStyle(
-                    fontSize: 18.5,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
               ),

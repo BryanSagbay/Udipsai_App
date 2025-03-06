@@ -111,14 +111,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: Row(
           children: [
             Image.asset(
-              'lib/images/definilylogo.png',
+              'assets/images/definilylogo.png',
               height: 230,
             ),
             SizedBox(width: 20),
             Spacer(),
             IconButton(
               icon: SvgPicture.asset(
-                'lib/icons/box-arrow-left.svg',
+                'assets/icons/box-arrow-left.svg',
                 width: 30,
                 height: 30,
                 colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
@@ -133,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           // Fondo de pantalla ajustado
           Positioned.fill(
             child: Image.asset(
-              'lib/images/fondo.png',
+              'assets/images/fondo.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -181,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               child: SlideTransition(
                 position: _aguilaSlideAnimation,
                 child: Image.asset(
-                  'lib/images/aguila.png',
+                  'assets/images/aguila.png',
                   width: 680,
                   height: 680,
                 ),
@@ -202,15 +202,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildFooterButton(context, "lib/icons/person-rolodex.svg", "Pacientes", () {
+          _buildFooterButton(context, "assets/icons/person-rolodex.svg", "Pacientes", () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => PacientesScreen()));
           }),
-          _buildFooterButton(context, "lib/icons/menu-down.svg", "Tests", () {
+          _buildFooterButton(context, "assets/icons/menu-down.svg", "Tests", () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => SeleccionPacientePage(onPacienteSeleccionado: (pacienteId, pacienteNombre, pacienteApellido) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => TestPage(pacienteId: pacienteId, pacienteNombre: pacienteNombre, pacienteApellido: pacienteApellido)));
             })));
           }),
-          _buildFooterButton(context, "lib/icons/pc-display.svg", "Soporte TI", () {}),
+          _buildFooterButton(context, "assets/icons/pc-display.svg", "Soporte TI", () {}),
         ],
       ),
     );
