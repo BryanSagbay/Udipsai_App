@@ -13,6 +13,9 @@
         android:name="android.hardware.bluetooth_le"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
     <application
         android:label="hc05_udipsai"
         android:name="${applicationName}"

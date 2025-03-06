@@ -6,8 +6,7 @@ import 'package:hc05_udipsai/pages/test/testPages/testRiel.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testTuercas.dart';
 import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
-
-
+import 'package:audioplayers/audioplayers.dart'; // Importar la librería de audioplayers
 
 class TestPage extends StatefulWidget {
   final String pacienteId;
@@ -26,6 +25,7 @@ class _TestPageState extends State<TestPage> {
   String? _connectedDeviceAddress;
   double _opacity = 0.0;
   double _positionY = -200;
+  final AudioPlayer _audioPlayer = AudioPlayer(); // Instancia de AudioPlayer
 
   @override
   void initState() {
@@ -49,7 +49,7 @@ class _TestPageState extends State<TestPage> {
     }
   }
 
-  Future<void> _connectToDevice(String macAddress) async {
+  Future<void> _connectToDevice(String macAddress, String audioPath) async {
     String serviceUuid = "00001101-0000-1000-8000-00805f9b34fb";
     try {
       await _bluetoothClassicPlugin.connect(macAddress, serviceUuid);
@@ -58,8 +58,10 @@ class _TestPageState extends State<TestPage> {
         _connectedDeviceAddress = macAddress;
       });
       _showSnackBar('Conectado a $macAddress', Colors.green);
+      await _playAudio(audioPath); // Reproducir audio específico del botón
     } catch (e) {
       _showSnackBar('Error al conectar: $e', Colors.red);
+      await _playAudio('assets/audios/Error.mp3'); // Reproducir audio de error de conexión
     }
   }
 
@@ -78,6 +80,10 @@ class _TestPageState extends State<TestPage> {
     }
   }
 
+  Future<void> _playAudio(String audioPath) async {
+    await _audioPlayer.play(AssetSource(audioPath)); // Reproducir el audio desde los assets
+  }
+
   void _showSnackBar(String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: backgroundColor),
@@ -87,6 +93,7 @@ class _TestPageState extends State<TestPage> {
   @override
   void dispose() {
     _disconnectDevice();
+    _audioPlayer.dispose(); // Liberar recursos del reproductor de audio
     super.dispose();
   }
 
@@ -101,24 +108,23 @@ class _TestPageState extends State<TestPage> {
         appBar: AppBar(
           backgroundColor: Colors.black87,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black), // Flecha de retroceso blanca
+            icon: Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () {
-              Navigator.pop(context); // Acción para retroceder
+              Navigator.pop(context);
             },
           ),
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.end, // Esto coloca el logo en el extremo derecho
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Image.asset(
                 'assets/images/definilylogo.png',
-                height: 250, // Ajusta el tamaño del logo
+                height: 250,
               ),
             ],
           ),
         ),
         body: Stack(
           children: [
-            // Fondo de la página
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
@@ -127,8 +133,6 @@ class _TestPageState extends State<TestPage> {
                 ),
               ),
             ),
-
-            // Animación del águila
             AnimatedPositioned(
               duration: Duration(seconds: 2),
               curve: Curves.easeOut,
@@ -158,7 +162,6 @@ class _TestPageState extends State<TestPage> {
                     ),
                     child: Row(
                       children: [
-                        // Información del paciente
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,37 +185,58 @@ class _TestPageState extends State<TestPage> {
                     ),
                   ),
                   SizedBox(height: 165),
-                  // Contenedor para los botones
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(10.0),
                       child: Column(
                         children: [
-                          // Primera fila de botones
                           Expanded(
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: _buildTestButton('Test de Monotonía', 'assets/images/test/testMonotonia.png', Monotonia(), "98:D3:71:FD:80:8B"),
+                                  child: _buildTestButton(
+                                    'Test de Monotonía',
+                                    'assets/images/test/testMonotonia.png',
+                                    Monotonia(),
+                                    "98:D3:71:FD:80:8B",
+                                    'audios/TestMonotonia.mp3', // Audio para el botón 1
+                                  ),
                                 ),
                                 SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTestButton('Sistema de Motrocidad', 'assets/images/test/testRiel.png', TestRiel(), "98:D3:31:F6:5D:9D"),
+                                  child: _buildTestButton(
+                                    'Sistema de Motrocidad',
+                                    'assets/images/test/testRiel.png',
+                                    TestRiel(),
+                                    "98:D3:31:F6:5D:9D",
+                                    'audios/SistemaMotrocidad.mp3', // Audio para el botón 2
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           SizedBox(height: 10),
-                          // Segunda fila de botones
                           Expanded(
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: _buildTestButton('Test de Palanca', 'assets/images/test/testPalanca.png', TestPalanca(), "00:22:03:01:3C:45"),
+                                  child: _buildTestButton(
+                                    'Test de Palanca',
+                                    'assets/images/test/testPalanca.png',
+                                    TestPalanca(),
+                                    "00:22:03:01:3C:45",
+                                    'audios/TestPalanca.mp3', // Audio para el botón 3
+                                  ),
                                 ),
                                 SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTestButton('Test de Bennett', 'assets/images/test/testTuercas.png', TestTuercas(), "98:D3:11:FC:3B:3D"),
+                                  child: _buildTestButton(
+                                    'Test de Bennett',
+                                    'assets/images/test/testTuercas.png',
+                                    TestTuercas(),
+                                    "98:D3:11:FC:3B:3D",
+                                    'audios/TestBennnett.mp3', // Audio para el botón 4
+                                  ),
                                 ),
                               ],
                             ),
@@ -230,10 +254,10 @@ class _TestPageState extends State<TestPage> {
     );
   }
 
-  Widget _buildTestButton(String text, String imagePath, Widget nextPage, String macAddress) {
+  Widget _buildTestButton(String text, String imagePath, Widget nextPage, String macAddress, String audioPath) {
     return GestureDetector(
       onTap: () async {
-        await _connectToDevice(macAddress);
+        await _connectToDevice(macAddress, audioPath);
         if (_isConnected) {
           Navigator.push(
             context,
