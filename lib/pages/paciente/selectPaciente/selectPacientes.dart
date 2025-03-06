@@ -22,7 +22,7 @@ class _SeleccionPacientePageState extends State<SeleccionPacientePage> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'lib/images/ofertafond.jpg',
+              'assets/images/ofertafond.jpg',
               // Asegúrate de que esta imagen exista
               fit: BoxFit.cover,
             ),
