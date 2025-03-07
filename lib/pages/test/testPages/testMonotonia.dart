@@ -1,116 +1,121 @@
 import 'package:flutter/material.dart';
-import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'dart:typed_data';
-import 'dart:convert';
+import 'package:hc05_udipsai/services/bluetoothService.dart';
 
 class Monotonia extends StatefulWidget {
-  final BluetoothClassic bluetooth = BluetoothClassic();  // Bluetooth instance
+  final BluetoothService bluetoothService;
+  final String macAddress;
+
+  const Monotonia({
+    super.key,
+    required this.bluetoothService,
+    required this.macAddress,
+  });
 
   @override
-  _MonotoniaState createState() => _MonotoniaState();
+  State<Monotonia> createState() => _DeviceScreenState();
 }
 
-class _MonotoniaState extends State<Monotonia> {
+class _DeviceScreenState extends State<Monotonia> {
+  final TextEditingController _controller = TextEditingController();
+  String _receivedData = "";
+
   String? _selectedOption;
   final List<String> _options = ['Aleatoriamente', 'Horario', 'Antihorario'];
   bool _isDropdownEnabled = false;
   bool _areButtonsEnabled = false;
-  bool _showCancelButton = false;
-  String _receivedData = '';
-  final ScrollController _scrollController = ScrollController();
-
-  List<int> _byteBuffer = [];
-  final _utf8Decoder = utf8.decoder;
+  bool _isPlayPressed = false;
 
   @override
   void initState() {
     super.initState();
-    _startBluetoothListener();
-  }
 
-  void _startBluetoothListener() {
-    widget.bluetooth.onDeviceDataReceived().listen((Uint8List data) {
-      _processIncomingData(data);
-    });
-  }
-
-  void _processIncomingData(Uint8List newData) {
-    _byteBuffer.addAll(newData); // Añadir nuevos datos al buffer
-
-    // Buscar delimitadores de fin de mensaje (ej. '\n')
-    int endIndex = _byteBuffer.lastIndexOf(10); // 10 = ASCII para '\n'
-
-    if (endIndex != -1) {
-      // Convertir la parte del buffer hasta el delimitador a string
-      String decoded = utf8.decode(_byteBuffer.sublist(0, endIndex));
-
-      // Actualizar el buffer para que contenga los datos restantes después del delimitador
-      _byteBuffer = _byteBuffer.sublist(endIndex + 1);
-
-      // Agregar los datos decodificados a la variable _receivedData
+    // Configurar el callback para recibir datos
+    widget.bluetoothService.onDataReceivedCallback = (String data) {
       setState(() {
-        _receivedData += decoded.trim() + '\n'; // Usamos trim() para eliminar posibles saltos de línea extras
+        _receivedData += data;
       });
-    }
+    };
   }
 
-
-  Future<void> _sendBluetoothMessage(String message) async {
-    try {
-      await widget.bluetooth.write(message);
-      print("Mensaje enviado: $message");
-    } catch (e) {
-      print("Error al enviar mensaje: $e");
-    }
+  @override
+  void dispose() {
+    widget.bluetoothService.disconnectFromDevice();
+    widget.bluetoothService.onDataReceivedCallback = null;
+    super.dispose();
   }
 
-  void _resetState() {
+  // Función para habilitar el Dropdown al presionar el botón "Play"
+  void _enableDropdown() {
     setState(() {
-      _isDropdownEnabled = false;
-      _areButtonsEnabled = false;
-      _selectedOption = null;
-      _showCancelButton = false;
+      _isPlayPressed = true;
+      _isDropdownEnabled = true; // Habilitar el Dropdown
     });
+  }
+
+  // Función para cancelar (envía 'S' al Bluetooth)
+  void _cancel() {
+    widget.bluetoothService.sendData('S');
+    setState(() {
+      _isPlayPressed = false;
+      _isDropdownEnabled = false;
+    });
+  }
+
+  // Enviar datos por Bluetooth
+  void _sendBluetoothMessage(String message) {
+    widget.bluetoothService.sendData(message);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Monotonía y Reacción Test"),
+        title: Text("Test de Monotonia"),
+        backgroundColor: Colors.white70, // Color personalizado para AppBar
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Row(
           children: [
+            // Primera columna (Botones)
             Expanded(
-              flex: 1,
+              flex: 2, // Esto hará que la columna 1 ocupe más espacio
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center, // Centrar los botones
                 children: [
-                  _buildButton("Botón 1", Colors.red, "rojo"),
-                  SizedBox(height: 10),
-                  _buildButton("Botón 3", Colors.blue, "azul"),
+                  // Botones para enviar mensajes al Bluetooth
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildButton("", Colors.red, "rojo"),
+                          const SizedBox(width: 10),
+                          _buildButton("", Colors.yellow, "amarillo"),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildButton("", Colors.blue, "azul"),
+                          const SizedBox(width: 10),
+                          _buildButton("", Colors.green, "verde"),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
+            // Segunda columna (Card con los resultados)
             Expanded(
-              flex: 1,
+              flex: 3, // Columna 2 será más ancha que la columna 1
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildButton("Botón 2", Colors.yellow, "amarillo"),
-                  SizedBox(height: 10),
-                  _buildButton("Botón 4", Colors.green, "verde"),
-                ],
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              flex: 4,
-              child: Column(
-                children: [
+                  // Dropdown para seleccionar la opción (visible pero desactivado al inicio)
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
@@ -127,8 +132,9 @@ class _MonotoniaState extends State<Monotonia> {
                             ? (String? newValue) {
                           setState(() {
                             _selectedOption = newValue!;
-                            _areButtonsEnabled = true;
+                            _areButtonsEnabled = true;  // Habilitar los botones
                           });
+
                           // Enviar la opción seleccionada al Bluetooth
                           if (_selectedOption == 'Aleatoriamente') {
                             _sendBluetoothMessage('M1');
@@ -138,7 +144,7 @@ class _MonotoniaState extends State<Monotonia> {
                             _sendBluetoothMessage('M3');
                           }
                         }
-                            : null,
+                            : null, // Desactivado si no se presionó "Play"
                         items: _options.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -148,7 +154,8 @@ class _MonotoniaState extends State<Monotonia> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                  // Área para mostrar los datos recibidos
                   Expanded(
                     child: Card(
                       elevation: 5,
@@ -157,7 +164,7 @@ class _MonotoniaState extends State<Monotonia> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(18.0),
-                        child: SingleChildScrollView(  // Aquí agregamos el scroll
+                        child: SingleChildScrollView(
                           child: Center(
                             child: Text(
                               _receivedData.isNotEmpty
@@ -173,58 +180,44 @@ class _MonotoniaState extends State<Monotonia> {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            if (_showCancelButton)
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: FloatingActionButton(
-                  onPressed: () {
-                    _sendBluetoothMessage('S');
-                    _resetState();
-                  },
-                  backgroundColor: Colors.red,
-                  child: Icon(Icons.cancel, color: Colors.white),
-                ),
-              ),
-            FloatingActionButton(
-              onPressed: _isDropdownEnabled
-                  ? null
-                  : () {
-                setState(() {
-                  _isDropdownEnabled = true;
-                  _showCancelButton = true;
-                });
-              },
-              backgroundColor: _isDropdownEnabled ? Colors.grey : Colors.blue,
-              child: Icon(Icons.play_arrow, color: Colors.white),
-            ),
-          ],
-        ),
-      ),
+      // Botones flotantes
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          FloatingActionButton(
+            onPressed: _enableDropdown,
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.play_arrow),
+          ),
+          if (_isPlayPressed) ...[
+            const SizedBox(width: 10),
+            FloatingActionButton(
+              onPressed: _cancel,
+              backgroundColor: Colors.red,
+              child: Icon(Icons.stop),
+            ),
+          ]
+        ],
+      ),
     );
   }
 
+  // Botón para enviar los mensajes de color
   Widget _buildButton(String text, Color color, String message) {
     return SizedBox(
-      width: 200,
-      height: 200,
+      width: 210,  // Puedes ajustar el tamaño aquí
+      height: 210,  // Puedes ajustar el tamaño aquí
       child: ElevatedButton(
         onPressed: _areButtonsEnabled
             ? () {
-          // Enviar el mensaje correspondiente al Bluetooth
-          _sendBluetoothMessage(message);
+          _sendBluetoothMessage(message);  // Enviar el mensaje correspondiente al Bluetooth
           print("$text presionado");
         }
             : null,
@@ -235,7 +228,10 @@ class _MonotoniaState extends State<Monotonia> {
             borderRadius: BorderRadius.circular(20),
           ),
         ),
-        child: Text(text, style: TextStyle(fontSize: 14, color: Colors.white)),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 14, color: Colors.white),
+        ),
       ),
     );
   }

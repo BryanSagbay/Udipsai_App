@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:bluetooth_classic/bluetooth_classic.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testPalanca.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testMonotonia.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testRiel.dart';
 import 'package:hc05_udipsai/pages/test/testPages/testTuercas.dart';
-import 'dart:async';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:audioplayers/audioplayers.dart'; // Importar la librería de audioplayers
+import 'package:audioplayers/audioplayers.dart';
+import 'package:hc05_udipsai/services/bluetoothService.dart';
 
 class TestPage extends StatefulWidget {
   final String pacienteId;
@@ -20,68 +18,60 @@ class TestPage extends StatefulWidget {
 }
 
 class _TestPageState extends State<TestPage> {
-  final _bluetoothClassicPlugin = BluetoothClassic();
+  final BluetoothService _bluetoothService = BluetoothService();
   bool _isConnected = false;
   String? _connectedDeviceAddress;
-  double _opacity = 0.0;
-  double _positionY = -200;
-  final AudioPlayer _audioPlayer = AudioPlayer(); // Instancia de AudioPlayer
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  final List<Map<String, dynamic>> _devices = [
+    {"mac": "98:D3:71:FD:80:8B", "screen": (BluetoothService service, String mac) => Monotonia(bluetoothService: service, macAddress: mac)},
+    {"mac": "98:D3:31:F6:5D:9D", "screen": (BluetoothService service, String mac) => TestRiel()},
+    {"mac": "00:22:03:01:3C:45", "screen": (BluetoothService service, String mac) => TestPalanca()},
+    {"mac": "98:D3:11:FC:3B:3D", "screen": (BluetoothService service, String mac) => TestTuercas()},
+  ];
 
   @override
   void initState() {
     super.initState();
-    _requestBluetoothPermissions();
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() {
-        _opacity = 1.0;
-        _positionY = -10.0;
-      });
-    });
+    _bluetoothService.init();
   }
 
-  Future<void> _requestBluetoothPermissions() async {
-    if (await Permission.bluetoothScan.request().isGranted &&
-        await Permission.bluetoothConnect.request().isGranted &&
-        await Permission.location.request().isGranted) {
-      print("Permisos concedidos ✅");
-    } else {
-      print("Permisos denegados ❌");
-    }
+  @override
+  void dispose() {
+    _bluetoothService.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   Future<void> _connectToDevice(String macAddress, String audioPath) async {
-    String serviceUuid = "00001101-0000-1000-8000-00805f9b34fb";
-    try {
-      await _bluetoothClassicPlugin.connect(macAddress, serviceUuid);
-      setState(() {
-        _isConnected = true;
-        _connectedDeviceAddress = macAddress;
-      });
-      _showSnackBar('Conectado a $macAddress', Colors.green);
-      await _playAudio(audioPath); // Reproducir audio específico del botón
-    } catch (e) {
-      _showSnackBar('Error al conectar: $e', Colors.red);
-      await _playAudio('assets/audios/Error.mp3'); // Reproducir audio de error de conexión
-    }
-  }
-
-  Future<void> _disconnectDevice() async {
-    if (_isConnected) {
-      try {
-        await _bluetoothClassicPlugin.disconnect();
+    var device = _devices.firstWhere((device) => device["mac"] == macAddress, orElse: () => {});
+    if (device.isNotEmpty) {
+      bool connected = await _bluetoothService.connectToDevice(macAddress);
+      if (connected) {
         setState(() {
-          _isConnected = false;
-          _connectedDeviceAddress = null;
+          _isConnected = true;
+          _connectedDeviceAddress = macAddress;
         });
-        _showSnackBar('Desconectado', Colors.orange);
-      } catch (e) {
-        _showSnackBar('Error al desconectar: $e', Colors.red);
+        await _playAudio(audioPath);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => device["screen"](_bluetoothService, macAddress)),
+        ).then((_) async {
+          await _bluetoothService.disconnectFromDevice();
+          setState(() {
+            _isConnected = false;
+            _connectedDeviceAddress = null;
+          });
+        });
+      } else {
+        _showSnackBar('Error al conectar', Colors.red);
+        await _playAudio('assets/audios/Error.mp3');
       }
     }
   }
 
   Future<void> _playAudio(String audioPath) async {
-    await _audioPlayer.play(AssetSource(audioPath)); // Reproducir el audio desde los assets
+    await _audioPlayer.play(AssetSource(audioPath));
   }
 
   void _showSnackBar(String message, Color backgroundColor) {
@@ -91,17 +81,10 @@ class _TestPageState extends State<TestPage> {
   }
 
   @override
-  void dispose() {
-    _disconnectDevice();
-    _audioPlayer.dispose(); // Liberar recursos del reproductor de audio
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await _disconnectDevice();
+        await _bluetoothService.disconnectFromDevice();
         return true;
       },
       child: Scaffold(
@@ -133,116 +116,35 @@ class _TestPageState extends State<TestPage> {
                 ),
               ),
             ),
-            AnimatedPositioned(
-              duration: Duration(seconds: 2),
-              curve: Curves.easeOut,
-              top: _positionY,
-              left: MediaQuery.of(context).size.width / 2 - 135,
-              child: AnimatedOpacity(
-                duration: Duration(seconds: 2),
-                opacity: _opacity,
-                child: Image.asset(
-                  'assets/images/aguila.png',
-                  width: 300,
-                  height: 370,
-                ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white70,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                  Expanded(
                     child: Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "PACIENTE SELECCIONADO:",
-                                style: TextStyle(color: Colors.black),
-                              ),
-                              Text(
-                                "${widget.pacienteNombre} ${widget.pacienteApellido}",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                          child: _buildTestButton('Test de Monotonía', 'assets/images/test/testMonotonia.png', "98:D3:71:FD:80:8B", 'audios/TestMonotonia.mp3'),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: _buildTestButton('Sistema de Motrocidad', 'assets/images/test/testRiel.png', "98:D3:31:F6:5D:9D", 'audios/SistemaMotrocidad.mp3'),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 165),
+                  SizedBox(height: 10),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTestButton(
-                                    'Test de Monotonía',
-                                    'assets/images/test/testMonotonia.png',
-                                    Monotonia(),
-                                    "98:D3:71:FD:80:8B",
-                                    'audios/TestMonotonia.mp3', // Audio para el botón 1
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: _buildTestButton(
-                                    'Sistema de Motrocidad',
-                                    'assets/images/test/testRiel.png',
-                                    TestRiel(),
-                                    "98:D3:31:F6:5D:9D",
-                                    'audios/SistemaMotrocidad.mp3', // Audio para el botón 2
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTestButton(
-                                    'Test de Palanca',
-                                    'assets/images/test/testPalanca.png',
-                                    TestPalanca(),
-                                    "00:22:03:01:3C:45",
-                                    'audios/TestPalanca.mp3', // Audio para el botón 3
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: _buildTestButton(
-                                    'Test de Bennett',
-                                    'assets/images/test/testTuercas.png',
-                                    TestTuercas(),
-                                    "98:D3:11:FC:3B:3D",
-                                    'audios/TestBennnett.mp3', // Audio para el botón 4
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildTestButton('Test de Palanca', 'assets/images/test/testPalanca.png', "00:22:03:01:3C:45", 'audios/TestPalanca.mp3'),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: _buildTestButton('Test de Bennett', 'assets/images/test/testTuercas.png', "98:D3:11:FC:3B:3D", 'audios/TestBennnett.mp3'),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -254,18 +156,10 @@ class _TestPageState extends State<TestPage> {
     );
   }
 
-  Widget _buildTestButton(String text, String imagePath, Widget nextPage, String macAddress, String audioPath) {
+  Widget _buildTestButton(String text, String imagePath, String macAddress, String audioPath) {
     return GestureDetector(
       onTap: () async {
         await _connectToDevice(macAddress, audioPath);
-        if (_isConnected) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => nextPage),
-          ).then((_) async {
-            await _disconnectDevice();
-          });
-        }
       },
       child: Container(
         decoration: BoxDecoration(
@@ -280,34 +174,12 @@ class _TestPageState extends State<TestPage> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(70.0),
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(5),
-                  bottomRight: Radius.circular(5),
-                ),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.scaleDown,
-                ),
-              ),
+            Expanded(child: Image.asset(imagePath, fit: BoxFit.cover)),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
