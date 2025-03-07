@@ -17,11 +17,13 @@ class TestPage extends StatefulWidget {
   _TestPageState createState() => _TestPageState();
 }
 
-class _TestPageState extends State<TestPage> {
+class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin {
   final BluetoothService _bluetoothService = BluetoothService();
   bool _isConnected = false;
   String? _connectedDeviceAddress;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  late AnimationController _controller;
+  late Animation<Offset> _animation;
 
   final List<Map<String, dynamic>> _devices = [
     {"mac": "98:D3:71:FD:80:8B", "screen": (BluetoothService service, String mac) => Monotonia(bluetoothService: service, macAddress: mac)},
@@ -34,10 +36,25 @@ class _TestPageState extends State<TestPage> {
   void initState() {
     super.initState();
     _bluetoothService.init();
+
+    // Configuración de la animación
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset(0, 0.1),
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void dispose() {
+    _controller.dispose();
     _bluetoothService.dispose();
     _audioPlayer.dispose();
     super.dispose();
@@ -91,7 +108,7 @@ class _TestPageState extends State<TestPage> {
         appBar: AppBar(
           backgroundColor: Colors.black87,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -101,7 +118,7 @@ class _TestPageState extends State<TestPage> {
             children: [
               Image.asset(
                 'assets/images/definilylogo.png',
-                height: 250,
+                height: 280,
               ),
             ],
           ),
@@ -120,6 +137,56 @@ class _TestPageState extends State<TestPage> {
               padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
               child: Column(
                 children: [
+                  // Tarjeta del paciente seleccionado
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white70,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, // Texto justificado a la izquierda
+                      children: [
+                        Text(
+                          'PACIENTE SELECCIONADO:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          '${widget.pacienteNombre} ${widget.pacienteApellido}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20), // Espacio entre la tarjeta y los botones
+                  // Mover la animación del águila aquí, debajo de la tarjeta
+                  SlideTransition(
+                    position: _animation,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/aguila.png',
+                        height: 135,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 50), // Espacio entre la águila y los botones
                   Expanded(
                     child: Row(
                       children: [
@@ -133,7 +200,6 @@ class _TestPageState extends State<TestPage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 10),
                   Expanded(
                     child: Row(
                       children: [
@@ -174,12 +240,32 @@ class _TestPageState extends State<TestPage> {
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
-            Expanded(child: Image.asset(imagePath, fit: BoxFit.cover)),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            // Expansión del texto
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(64.0), // Espaciado alrededor del texto
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis, // Maneja el desbordamiento del texto si es necesario
+                ),
+              ),
+            ),
+            // Imagen a la derecha
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.scaleDown,
+                height: 180, // Ajusta la altura según lo que necesites
+                width: 180,  // Ajusta el tamaño de la imagen
+              ),
             ),
           ],
         ),
