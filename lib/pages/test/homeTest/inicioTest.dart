@@ -27,7 +27,7 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
 
   final List<Map<String, dynamic>> _devices = [
     {"mac": "98:D3:71:FD:80:8B", "screen": (BluetoothService service, String mac) => Monotonia(bluetoothService: service, macAddress: mac)},
-    {"mac": "98:D3:31:F6:5D:9D", "screen": (BluetoothService service, String mac) => TestRiel()},
+    {"mac": "98:D3:31:F6:5D:9D", "screen": (BluetoothService service, String mac) => TestRiel(bluetoothService: service, macAddress: mac)},
     {"mac": "00:22:03:01:3C:45", "screen": (BluetoothService service, String mac) => TestPalanca(bluetoothService: service, macAddress: mac)},
     {"mac": "98:D3:11:FC:3B:3D", "screen": (BluetoothService service, String mac) => TestTuercas()},
   ];
