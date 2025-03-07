@@ -52,12 +52,15 @@ class _DeviceScreenState extends State<Monotonia> {
     });
   }
 
-  // Función para cancelar (envía 'S' al Bluetooth)
+  // Función para cancelar (envía 'S' al Bluetooth y desactiva los botones)
   void _cancel() {
     widget.bluetoothService.sendData('S');
     setState(() {
       _isPlayPressed = false;
       _isDropdownEnabled = false;
+      _areButtonsEnabled = false; // Desactivar los botones
+      _receivedData = ""; // Limpiar los datos recibidos
+      _selectedOption = null; // Limpiar la opción seleccionada
     });
   }
 
@@ -80,8 +83,7 @@ class _DeviceScreenState extends State<Monotonia> {
             // Primera columna (Botones)
             Expanded(
               flex: 2, // Esto hará que la columna 1 ocupe más espacio
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center, // Centrar los botones
+              child: ListView(
                 children: [
                   // Botones para enviar mensajes al Bluetooth
                   Column(
@@ -89,18 +91,18 @@ class _DeviceScreenState extends State<Monotonia> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildButton("", Colors.red, "rojo"),
-                          const SizedBox(width: 10),
-                          _buildButton("", Colors.yellow, "amarillo"),
+                          _buildButton("Botón 1", Colors.red, "rojo"),
+                          const SizedBox(width: 15),
+                          _buildButton("Botón 2", Colors.yellow, "amarillo"),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 15),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildButton("", Colors.blue, "azul"),
-                          const SizedBox(width: 10),
-                          _buildButton("", Colors.green, "verde"),
+                          _buildButton("Botón 3", Colors.blue, "azul"),
+                          const SizedBox(width: 15),
+                          _buildButton("Botón 4", Colors.green, "verde"),
                         ],
                       ),
                     ],
@@ -132,7 +134,7 @@ class _DeviceScreenState extends State<Monotonia> {
                             ? (String? newValue) {
                           setState(() {
                             _selectedOption = newValue!;
-                            _areButtonsEnabled = true;  // Habilitar los botones
+                            _areButtonsEnabled = true;  // Habilitar los botones solo si se seleccionó una opción
                           });
 
                           // Enviar la opción seleccionada al Bluetooth
@@ -200,8 +202,8 @@ class _DeviceScreenState extends State<Monotonia> {
             const SizedBox(width: 10),
             FloatingActionButton(
               onPressed: _cancel,
-              backgroundColor: Colors.red,
-              child: Icon(Icons.stop),
+              backgroundColor: Colors.yellow,
+              child: Icon(Icons.restart_alt),
             ),
           ]
         ],
