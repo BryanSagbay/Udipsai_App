@@ -12,27 +12,23 @@ class TestPalanca extends StatefulWidget {
   });
 
   @override
-  State<TestPalanca> createState() => _DeviceScreenState();
+  State<TestPalanca> createState() => _TestPalancaPageState();
 }
 
-class _DeviceScreenState extends State<TestPalanca> {
+class _TestPalancaPageState extends State<TestPalanca> {
   String _receivedData = "";
-  bool _isPlayPressed = false;
-  bool _areButtonsEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    print("Dispositivo ya conectado desde TestPage");
 
-    // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
-      print("Datos recibidos en TestPalanca: $data"); // Debug
       setState(() {
-        _receivedData += data;
+        _receivedData += data + "\n"; // Agregar un salto de línea para separar las respuestas
       });
     };
   }
+
 
   @override
   void dispose() {
@@ -41,67 +37,37 @@ class _DeviceScreenState extends State<TestPalanca> {
     super.dispose();
   }
 
-  void _play() {
-    print("Habilitando botones...");
-    setState(() {
-      _isPlayPressed = true;
-      _areButtonsEnabled = true;
-    });
+  // Enviar "M1" al módulo Bluetooth
+  void _sendM1Command() {
+    widget.bluetoothService.sendData('M1');
   }
-
-  void _cancel() {
-    print("Botón Cancelar presionado");
-    widget.bluetoothService.sendData('S').then((_) {
-      print("Comando 'S' enviado correctamente");
-    }).catchError((error) {
-      print("Error al enviar 'S': $error");
-    });
-    setState(() {
-      _isPlayPressed = false;
-      _areButtonsEnabled = false;
-      _receivedData = "";
-    });
-  }
-
-  void _sendM1() {
-    try {
-      widget.bluetoothService.sendData('M1');
-      print("M1 enviado correctamente");
-    } catch (error) {
-      print("Error al enviar M1: $error");
-    }
-  }
-
-  // Repite para _sendM2 y _sendM3
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Test de Palanca"),
+        title: const Text("Monotonía M1"),
         backgroundColor: Colors.white70,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(64.0),
-        child: Row(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Columna izquierda con botones
-            SizedBox(
-              width: 150,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ElevatedButton(
-                    onPressed: _areButtonsEnabled ? _sendM1 : null,
-                    child: Text('Enviar M1'),
-                  ),
-                  // Repite para M2 y M3
-                ],
+            // Botón para enviar "M1"
+            ElevatedButton(
+              onPressed: _sendM1Command,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              child: const Text(
+                "Enviar M1",
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
-            const SizedBox(width: 20),
-            // Card para datos recibidos
+            const SizedBox(height: 20),
+            // Área para mostrar los datos recibidos
             Expanded(
               child: Card(
                 elevation: 5,
@@ -116,7 +82,7 @@ class _DeviceScreenState extends State<TestPalanca> {
                         _receivedData.isNotEmpty
                             ? _receivedData
                             : "Esperando datos del dispositivo...",
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -128,25 +94,6 @@ class _DeviceScreenState extends State<TestPalanca> {
             ),
           ],
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          FloatingActionButton(
-            onPressed: _play,
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.play_arrow),
-          ),
-          if (_isPlayPressed) ...[
-            const SizedBox(width: 10),
-            FloatingActionButton(
-              onPressed: _cancel,
-              backgroundColor: Colors.yellow,
-              child: Icon(Icons.restart_alt),
-            ),
-          ]
-        ],
       ),
     );
   }

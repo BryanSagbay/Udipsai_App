@@ -27,7 +27,7 @@ class BluetoothService {
     try {
       await _bluetooth.connect(
         macAddress,
-        "00001101-0000-1000-8000-00805f9b34fb", // UUID para HC-05
+        "00001101-0000-1000-8000-00805F9B34FB",
       );
       return true;
     } catch (e) {
