@@ -29,7 +29,7 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
     {"mac": "98:D3:71:FD:80:8B", "screen": (BluetoothService service, String mac) => Monotonia(bluetoothService: service, macAddress: mac)},
     {"mac": "98:D3:31:F6:5D:9D", "screen": (BluetoothService service, String mac) => TestRiel(bluetoothService: service, macAddress: mac)},
     {"mac": "00:22:03:01:3C:45", "screen": (BluetoothService service, String mac) => TestPalanca(bluetoothService: service, macAddress: mac)},
-    {"mac": "98:D3:11:FC:3B:3D", "screen": (BluetoothService service, String mac) => TestTuercas()},
+    {"mac": "98:D3:11:FC:3B:3D", "screen": (BluetoothService service, String mac) => TestTuercas(bluetoothService: service, macAddress: mac)},
   ];
 
 
@@ -74,16 +74,13 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => device["screen"](_bluetoothService, macAddress)),
-        ).then((_) async {
-          await _bluetoothService.disconnectFromDevice();
+        ).then((_) {
+          // Eliminar esta desconexión automática
           setState(() {
             _isConnected = false;
             _connectedDeviceAddress = null;
           });
         });
-      } else {
-        _showSnackBar('Error al conectar', Colors.red);
-        await _playAudio('audios/Error.mp3');
       }
     }
   }

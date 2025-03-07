@@ -1,57 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'dart:typed_data';
-import 'dart:convert';
+import 'package:hc05_udipsai/services/bluetoothService.dart';
 
 class TestTuercas extends StatefulWidget {
+  final BluetoothService bluetoothService;
+  final String macAddress;
+
+  const TestTuercas({
+    super.key,
+    required this.bluetoothService,
+    required this.macAddress,
+  });
+
   @override
   _TestTuercasState createState() => _TestTuercasState();
 }
 
 class _TestTuercasState extends State<TestTuercas> {
-  final BluetoothClassic _bluetooth = BluetoothClassic(); // Instancia interna de Bluetooth
   String _receivedData = '';
-  final ScrollController _scrollController = ScrollController();
-  List<int> _byteBuffer = [];
-  final _utf8Decoder = utf8.decoder;
-  bool _areButtonsEnabled = false; // Estado para habilitar/deshabilitar botones
-  bool _showCancelButton = false; // Estado para mostrar/ocultar el botón de cancelar
+  bool _areButtonsEnabled = false;
+  bool _showCancelButton = false;
 
   @override
   void initState() {
     super.initState();
-    _startBluetoothListener();
-  }
+    print("Dispositivo ya conectado desde TestPage");
 
-  // Función para recibir datos Bluetooth
-  void _startBluetoothListener() {
-    _bluetooth.onDeviceDataReceived().listen((Uint8List data) {
-      _processIncomingData(data);
-    });
-  }
-
-  // Procesa los datos recibidos
-  void _processIncomingData(Uint8List newData) {
-    _byteBuffer.addAll(newData);
-    int endIndex = _byteBuffer.lastIndexOf(10); // ASCII para '\n'
-
-    if (endIndex != -1) {
-      String decoded = utf8.decode(_byteBuffer.sublist(0, endIndex));
-      _byteBuffer = _byteBuffer.sublist(endIndex + 1);
-
+    // Configurar el callback para recibir datos
+    widget.bluetoothService.onDataReceivedCallback = (String data) {
+      print("Datos recibidos en TestTuercas: $data"); // Debug
       setState(() {
-        _receivedData += decoded.trim() + '\n';
+        _receivedData += data;
       });
-    }
+    };
   }
 
-  // Enviar mensaje por Bluetooth
-  Future<void> _sendBluetoothMessage(String message) async {
+  @override
+  void dispose() {
+    widget.bluetoothService.disconnectFromDevice();
+    widget.bluetoothService.onDataReceivedCallback = null;
+    super.dispose();
+  }
+
+  // Enviar mensaje al Bluetooth
+  void _sendBluetoothMessage(String message) {
     try {
-      await _bluetooth.write(message);
-      print("Mensaje enviado: $message");
-    } catch (e) {
-      print("Error al enviar mensaje: $e");
+      widget.bluetoothService.sendData(message);
+      print("Mensaje '$message' enviado correctamente");
+    } catch (error) {
+      print("Error al enviar '$message': $error");
     }
   }
 
@@ -99,7 +95,6 @@ class _TestTuercasState extends State<TestTuercas> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: SingleChildScrollView(
-                    controller: _scrollController,
                     child: Center(
                       child: Text(
                         _receivedData.isNotEmpty

@@ -1,8 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
-import 'dart:convert';
-import 'package:hc05_udipsai/services/bluetoothService.dart'; // Asegúrate de tener este servicio de Bluetooth
+import 'package:hc05_udipsai/services/bluetoothService.dart';
 
 class TestRiel extends StatefulWidget {
   final BluetoothService bluetoothService;
@@ -20,52 +17,31 @@ class TestRiel extends StatefulWidget {
 
 class _TestRielState extends State<TestRiel> {
   String _receivedData = '';
-  final ScrollController _scrollController = ScrollController();
-  StreamSubscription<Uint8List>? _bluetoothSubscription;
-
-  List<int> _byteBuffer = [];
-  final _utf8Decoder = utf8.decoder;
-
   bool _areButtonsEnabled = false;
   bool _isPlayPressed = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Conectar al dispositivo Bluetooth usando la dirección MAC
-    widget.bluetoothService.connectToDevice(widget.macAddress);
+    print("Dispositivo ya conectado desde TestPage");
 
     // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
+      print("Datos recibidos en TestRiel: $data"); // Debug
       setState(() {
         _receivedData += data;
       });
     };
   }
 
-  // Procesa los datos recibidos del Bluetooth
-  void _processIncomingData(Uint8List newData) {
-    _byteBuffer.addAll(newData); // Añadir nuevos datos al buffer
-
-    // Buscar delimitadores de fin de mensaje (ej. '\n')
-    int endIndex = _byteBuffer.lastIndexOf(10); // 10 = ASCII para '\n'
-
-    if (endIndex != -1) {
-      // Convertir la parte del buffer hasta el delimitador a string
-      String decoded = utf8.decode(_byteBuffer.sublist(0, endIndex));
-
-      // Actualizar el buffer para que contenga los datos restantes después del delimitador
-      _byteBuffer = _byteBuffer.sublist(endIndex + 1);
-
-      // Agregar los datos decodificados a la variable _receivedData
-      setState(() {
-        _receivedData += decoded.trim() + '\n'; // Usamos trim() para eliminar posibles saltos de línea extras
-      });
-    }
+  @override
+  void dispose() {
+    widget.bluetoothService.disconnectFromDevice();
+    widget.bluetoothService.onDataReceivedCallback = null;
+    super.dispose();
   }
 
-  // Función para habilitar los botones de control
+  // Función para habilitar los botones
   void _enableButtons() {
     setState(() {
       _isPlayPressed = true;
@@ -75,7 +51,11 @@ class _TestRielState extends State<TestRiel> {
 
   // Función para cancelar (envía 'S' al Bluetooth y desactiva los botones)
   void _cancel() {
-    widget.bluetoothService.sendData('S'); // Enviar 'S' al dispositivo Bluetooth
+    widget.bluetoothService.sendData('S').then((_) {
+      print("Comando 'S' enviado correctamente");
+    }).catchError((error) {
+      print("Error al enviar 'S': $error");
+    });
     setState(() {
       _isPlayPressed = false;
       _areButtonsEnabled = false;
@@ -83,11 +63,14 @@ class _TestRielState extends State<TestRiel> {
     });
   }
 
-  @override
-  void dispose() {
-    widget.bluetoothService.disconnectFromDevice(); // Desconectar del dispositivo al salir
-    widget.bluetoothService.onDataReceivedCallback = null;
-    super.dispose();
+  // Enviar mensaje al Bluetooth
+  void _sendBluetoothMessage(String message) {
+    try {
+      widget.bluetoothService.sendData(message);
+      print("Mensaje '$message' enviado correctamente");
+    } catch (error) {
+      print("Error al enviar '$message': $error");
+    }
   }
 
   @override
@@ -117,9 +100,9 @@ class _TestRielState extends State<TestRiel> {
                   // Botones para enviar mensajes al Bluetooth
                   _buildButton("Trayectoria 1", Colors.blue, "M1"),
                   SizedBox(height: 10),
-                  _buildButton("Trayectoria 2", Colors.red, "M1"),
+                  _buildButton("Trayectoria 2", Colors.red, "M2"),
                   SizedBox(height: 10),
-                  _buildButton("Trayectoria 3", Colors.green, "M1"),
+                  _buildButton("Trayectoria 3", Colors.green, "M3"),
                   SizedBox(height: 20),
                   // Botón Cancelar que envía 'S' y limpia la pantalla
                   if (_isPlayPressed)
@@ -168,7 +151,7 @@ class _TestRielState extends State<TestRiel> {
       child: ElevatedButton(
         onPressed: _areButtonsEnabled
             ? () {
-          widget.bluetoothService.sendData(message); // Enviar el mensaje correspondiente al Bluetooth
+          _sendBluetoothMessage(message); // Enviar el mensaje correspondiente al Bluetooth
           print("$text presionado");
         }
             : null,

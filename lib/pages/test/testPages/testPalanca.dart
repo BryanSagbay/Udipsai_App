@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hc05_udipsai/services/bluetoothService.dart';
-import 'dart:convert';
 
 class TestPalanca extends StatefulWidget {
   final BluetoothService bluetoothService;
@@ -20,14 +19,15 @@ class _DeviceScreenState extends State<TestPalanca> {
   String _receivedData = "";
   bool _isPlayPressed = false;
   bool _areButtonsEnabled = false;
-  bool _showCancelButton = false;
 
   @override
   void initState() {
     super.initState();
+    print("Dispositivo ya conectado desde TestPage");
 
     // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
+      print("Datos recibidos en TestPalanca: $data"); // Debug
       setState(() {
         _receivedData += data;
       });
@@ -41,53 +41,38 @@ class _DeviceScreenState extends State<TestPalanca> {
     super.dispose();
   }
 
-  // Función para enviar M1 y habilitar la recepción de datos
   void _play() {
+    print("Habilitando botones...");
     setState(() {
       _isPlayPressed = true;
       _areButtonsEnabled = true;
-      _showCancelButton = true;
     });
   }
 
-  // Función para cancelar (envía 'S' al Bluetooth y limpia los datos)
   void _cancel() {
-    widget.bluetoothService.sendData('S');
+    print("Botón Cancelar presionado");
+    widget.bluetoothService.sendData('S').then((_) {
+      print("Comando 'S' enviado correctamente");
+    }).catchError((error) {
+      print("Error al enviar 'S': $error");
+    });
     setState(() {
       _isPlayPressed = false;
       _areButtonsEnabled = false;
-      _receivedData = ""; // Limpiar los datos recibidos
-      _showCancelButton = false;
+      _receivedData = "";
     });
   }
 
-  // Funciones para enviar M2 y M3
-  void _sendM(String message) {
-    widget.bluetoothService.sendData(message);
+  void _sendM1() {
+    try {
+      widget.bluetoothService.sendData('M1');
+      print("M1 enviado correctamente");
+    } catch (error) {
+      print("Error al enviar M1: $error");
+    }
   }
 
-  // Método para construir botones con Bluetooth
-  Widget _buildButton(String text, Color color, String message) {
-    return SizedBox(
-      width: double.infinity, // Asegura que los botones ocupen todo el ancho
-      child: ElevatedButton(
-        onPressed: _areButtonsEnabled
-            ? () {
-          _sendM(message);
-          print("$text presionado");
-        }
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(text, style: TextStyle(fontSize: 18, color: Colors.white)),
-      ),
-    );
-  }
+  // Repite para _sendM2 y _sendM3
 
   @override
   Widget build(BuildContext context) {
@@ -97,41 +82,45 @@ class _DeviceScreenState extends State<TestPalanca> {
         backgroundColor: Colors.white70,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(64.0),
         child: Row(
           children: [
-            // Columna izquierda con botones M1, M2, M3
-            Expanded(
-              flex: 1,
+            // Columna izquierda con botones
+            SizedBox(
+              width: 150,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildButton("Enviar M2", Colors.blue, "M1"),
-                  SizedBox(height: 10),
-                  _buildButton("Enviar M3", Colors.red, "M1"),
-                  SizedBox(height: 10),
-                  _buildButton("Enviar M1", Colors.green, "M1"),
+                  ElevatedButton(
+                    onPressed: _areButtonsEnabled ? _sendM1 : null,
+                    child: Text('Enviar M1'),
+                  ),
+                  // Repite para M2 y M3
                 ],
               ),
             ),
-            const SizedBox(width: 20), // Espaciado entre columnas
-
-            // Columna derecha con la Card ocupando toda la altura y ancho disponible
+            const SizedBox(width: 20),
+            // Card para datos recibidos
             Expanded(
-              flex: 2,
               child: Card(
                 elevation: 5,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0), // Ajuste razonable para el padding
-                  child: Center(
-                    child: Text(
-                      _receivedData.isNotEmpty
-                          ? _receivedData
-                          : "Esperando datos del dispositivo...",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.all(18.0),
+                  child: SingleChildScrollView(
+                    child: Center(
+                      child: Text(
+                        _receivedData.isNotEmpty
+                            ? _receivedData
+                            : "Esperando datos del dispositivo...",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -140,31 +129,25 @@ class _DeviceScreenState extends State<TestPalanca> {
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            if (_showCancelButton)
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: FloatingActionButton(
-                  onPressed: _cancel,
-                  backgroundColor: Colors.red,
-                  child: Icon(Icons.cancel, color: Colors.white),
-                ),
-              ),
-            FloatingActionButton(
-              onPressed: _isPlayPressed
-                  ? null
-                  : _play,
-              backgroundColor: _isPlayPressed ? Colors.grey : Colors.blue,
-              child: Icon(Icons.play_arrow, color: Colors.white),
-            ),
-          ],
-        ),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          FloatingActionButton(
+            onPressed: _play,
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.play_arrow),
+          ),
+          if (_isPlayPressed) ...[
+            const SizedBox(width: 10),
+            FloatingActionButton(
+              onPressed: _cancel,
+              backgroundColor: Colors.yellow,
+              child: Icon(Icons.restart_alt),
+            ),
+          ]
+        ],
+      ),
     );
   }
 }
