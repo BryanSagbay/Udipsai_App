@@ -22,9 +22,10 @@ class _TestPalancaPageState extends State<TestPalanca> {
   void initState() {
     super.initState();
 
+    // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
       setState(() {
-        _receivedData += data + "\n"; // Agregar un salto de línea para separar las respuestas
+        _receivedData += data;
       });
     };
   }
@@ -82,7 +83,7 @@ class _TestPalancaPageState extends State<TestPalanca> {
                         _receivedData.isNotEmpty
                             ? _receivedData
                             : "Esperando datos del dispositivo...",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),

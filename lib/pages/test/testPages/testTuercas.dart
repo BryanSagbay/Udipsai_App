@@ -19,20 +19,19 @@ class _TestTuercasState extends State<TestTuercas> {
   String _receivedData = '';
   bool _areButtonsEnabled = false;
   bool _showCancelButton = false;
-
   @override
   void initState() {
     super.initState();
-    print("Dispositivo ya conectado desde TestPage");
 
     // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
-      print("Datos recibidos en TestTuercas: $data"); // Debug
       setState(() {
         _receivedData += data;
       });
     };
   }
+
+
 
   @override
   void dispose() {
@@ -100,7 +99,10 @@ class _TestTuercasState extends State<TestTuercas> {
                         _receivedData.isNotEmpty
                             ? _receivedData
                             : "Esperando datos del dispositivo...",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

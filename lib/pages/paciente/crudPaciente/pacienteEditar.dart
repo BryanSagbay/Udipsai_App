@@ -53,8 +53,8 @@ class _EditarPacienteScreenState extends State<EditarPacienteScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/fondo.jpg"), // Cambia por la ruta de tu imagen
-                fit: BoxFit.cover, // Ajustar la imagen para cubrir toda la pantalla
+                image: AssetImage("assets/images/fondo.png"), // Cambia por la ruta de tu imagen
+                fit: BoxFit.cover, // Ajustar la imagen a cubrir toda la pantalla
               ),
             ),
           ),

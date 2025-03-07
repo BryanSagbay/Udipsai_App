@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:hc05_udipsai/services/bluetoothService.dart';
 
@@ -23,15 +25,22 @@ class _TestRielState extends State<TestRiel> {
   @override
   void initState() {
     super.initState();
-    print("Dispositivo ya conectado desde TestPage");
 
     // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
-      print("Datos recibidos en TestRiel: $data"); // Debug
       setState(() {
         _receivedData += data;
       });
     };
+  }
+
+  String _formatData(Uint8List data) {
+    // Convertir los bytes en su representación binaria (0s y 1s)
+    String binaryString = data.map((byte) {
+      return byte.toRadixString(2).padLeft(8, '0'); // Convertir a binario y asegurarse de tener 8 bits
+    }).join(' '); // Unir los bytes como cadenas separadas por espacios
+
+    return binaryString;
   }
 
   @override
@@ -100,9 +109,9 @@ class _TestRielState extends State<TestRiel> {
                   // Botones para enviar mensajes al Bluetooth
                   _buildButton("Trayectoria 1", Colors.blue, "M1"),
                   SizedBox(height: 10),
-                  _buildButton("Trayectoria 2", Colors.red, "M2"),
+                  _buildButton("Trayectoria 2", Colors.red, "M1"),
                   SizedBox(height: 10),
-                  _buildButton("Trayectoria 3", Colors.green, "M3"),
+                  _buildButton("Trayectoria 3", Colors.green, "M1"),
                   SizedBox(height: 20),
                   // Botón Cancelar que envía 'S' y limpia la pantalla
                   if (_isPlayPressed)
@@ -130,8 +139,10 @@ class _TestRielState extends State<TestRiel> {
                       child: Text(
                         _receivedData.isNotEmpty
                             ? _receivedData
-                            : "Esperando datos del dispositivo...",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            : "Esperando datos...",
+                        style: TextStyle(
+                            fontSize: 16, fontFamily: 'Courier'
+                        ),
                       ),
                     ),
                   ),
@@ -151,7 +162,7 @@ class _TestRielState extends State<TestRiel> {
       child: ElevatedButton(
         onPressed: _areButtonsEnabled
             ? () {
-          _sendBluetoothMessage(message); // Enviar el mensaje correspondiente al Bluetooth
+          _sendBluetoothMessage(message);
           print("$text presionado");
         }
             : null,
