@@ -1,66 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'dart:typed_data';
+import 'package:hc05_udipsai/services/bluetoothService.dart';
 import 'dart:convert';
 
 class TestPalanca extends StatefulWidget {
+  final BluetoothService bluetoothService;
+  final String macAddress;
+
+  const TestPalanca({
+    super.key,
+    required this.bluetoothService,
+    required this.macAddress,
+  });
+
   @override
-  _TestPalancaState createState() => _TestPalancaState();
+  State<TestPalanca> createState() => _DeviceScreenState();
 }
 
-class _TestPalancaState extends State<TestPalanca> {
-  final BluetoothClassic _bluetooth = BluetoothClassic();
+class _DeviceScreenState extends State<TestPalanca> {
+  String _receivedData = "";
+  bool _isPlayPressed = false;
   bool _areButtonsEnabled = false;
   bool _showCancelButton = false;
-  String _receivedData = '';
-  final ScrollController _scrollController = ScrollController();
-  List<int> _byteBuffer = [];
-  final _utf8Decoder = utf8.decoder;
 
   @override
   void initState() {
     super.initState();
-    _startBluetoothListener();
+
+    // Configurar el callback para recibir datos
+    widget.bluetoothService.onDataReceivedCallback = (String data) {
+      setState(() {
+        _receivedData += data;
+      });
+    };
   }
 
-  // Función para recibir datos Bluetooth
-  void _startBluetoothListener() {
-    _bluetooth.onDeviceDataReceived().listen((Uint8List data) {
-      _processIncomingData(data);
+  @override
+  void dispose() {
+    widget.bluetoothService.disconnectFromDevice();
+    widget.bluetoothService.onDataReceivedCallback = null;
+    super.dispose();
+  }
+
+  // Función para enviar M1 y habilitar la recepción de datos
+  void _play() {
+    setState(() {
+      _isPlayPressed = true;
+      _areButtonsEnabled = true;
+      _showCancelButton = true;
     });
   }
 
-  // Procesa los datos recibidos
-  void _processIncomingData(Uint8List newData) {
-    _byteBuffer.addAll(newData);
-    int endIndex = _byteBuffer.lastIndexOf(10); // ASCII para '\n'
-
-    if (endIndex != -1) {
-      String decoded = utf8.decode(_byteBuffer.sublist(0, endIndex));
-      _byteBuffer = _byteBuffer.sublist(endIndex + 1);
-
-      setState(() {
-        _receivedData += decoded.trim() + '\n';
-      });
-    }
-  }
-
-  // Enviar mensaje por Bluetooth
-  Future<void> _sendBluetoothMessage(String message) async {
-    try {
-      await _bluetooth.write(message);
-      print("Mensaje enviado: $message");
-    } catch (e) {
-      print("Error al enviar mensaje: $e");
-    }
-  }
-
-  // Resetear estado
-  void _resetState() {
+  // Función para cancelar (envía 'S' al Bluetooth y limpia los datos)
+  void _cancel() {
+    widget.bluetoothService.sendData('S');
     setState(() {
+      _isPlayPressed = false;
       _areButtonsEnabled = false;
+      _receivedData = ""; // Limpiar los datos recibidos
       _showCancelButton = false;
     });
+  }
+
+  // Funciones para enviar M2 y M3
+  void _sendM(String message) {
+    widget.bluetoothService.sendData(message);
+  }
+
+  // Método para construir botones con Bluetooth
+  Widget _buildButton(String text, Color color, String message) {
+    return SizedBox(
+      width: double.infinity, // Asegura que los botones ocupen todo el ancho
+      child: ElevatedButton(
+        onPressed: _areButtonsEnabled
+            ? () {
+          _sendM(message);
+          print("$text presionado");
+        }
+            : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(text, style: TextStyle(fontSize: 18, color: Colors.white)),
+      ),
+    );
   }
 
   @override
@@ -68,27 +94,29 @@ class _TestPalancaState extends State<TestPalanca> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Test de Palanca"),
+        backgroundColor: Colors.white70,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Primera columna (3 botones)
+            // Columna izquierda con botones M1, M2, M3
             Expanded(
               flex: 1,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildButton("Botón 1", Colors.blue, "M1"),
+                  _buildButton("Enviar M2", Colors.blue, "M1"),
                   SizedBox(height: 10),
-                  _buildButton("Botón 2", Colors.red, "M1"),
+                  _buildButton("Enviar M3", Colors.red, "M1"),
                   SizedBox(height: 10),
-                  _buildButton("Botón 3", Colors.green, "M1"),
+                  _buildButton("Enviar M1", Colors.green, "M1"),
                 ],
               ),
             ),
-            SizedBox(width: 20), // Espaciado entre columnas
-            // Segunda columna (Card para datos recibidos)
+            const SizedBox(width: 20), // Espaciado entre columnas
+
+            // Columna derecha con la Card ocupando toda la altura y ancho disponible
             Expanded(
               flex: 2,
               child: Card(
@@ -97,16 +125,13 @@ class _TestPalancaState extends State<TestPalanca> {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Center(
-                      child: Text(
-                        _receivedData.isNotEmpty
-                            ? _receivedData
-                            : "Esperando datos del dispositivo...",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                  padding: const EdgeInsets.all(16.0), // Ajuste razonable para el padding
+                  child: Center(
+                    child: Text(
+                      _receivedData.isNotEmpty
+                          ? _receivedData
+                          : "Esperando datos del dispositivo...",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -124,53 +149,22 @@ class _TestPalancaState extends State<TestPalanca> {
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: FloatingActionButton(
-                  onPressed: () {
-                    _sendBluetoothMessage('S');
-                    _resetState();
-                  },
+                  onPressed: _cancel,
                   backgroundColor: Colors.red,
                   child: Icon(Icons.cancel, color: Colors.white),
                 ),
               ),
             FloatingActionButton(
-              onPressed: _areButtonsEnabled
+              onPressed: _isPlayPressed
                   ? null
-                  : () {
-                setState(() {
-                  _areButtonsEnabled = true;
-                  _showCancelButton = true;
-                });
-              },
-              backgroundColor: _areButtonsEnabled ? Colors.grey : Colors.blue,
+                  : _play,
+              backgroundColor: _isPlayPressed ? Colors.grey : Colors.blue,
               child: Icon(Icons.play_arrow, color: Colors.white),
             ),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-    );
-  }
-
-  // Método para construir botones con Bluetooth
-  Widget _buildButton(String text, Color color, String message) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _areButtonsEnabled
-            ? () {
-          _sendBluetoothMessage(message);
-          print("$text presionado");
-        }
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(text, style: TextStyle(fontSize: 18, color: Colors.white)),
-      ),
     );
   }
 }
