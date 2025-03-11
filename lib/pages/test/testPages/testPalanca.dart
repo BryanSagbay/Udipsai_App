@@ -46,10 +46,15 @@ class _TestPalancaPageState extends State<TestPalanca> {
 
   // Método para procesar los datos recibidos separados por coma
   void _processReceivedData(String data) {
-    if (data.contains(',')) {
-      List<String> parts = data.split(',');
+    // Eliminar los paréntesis de la cadena
+    String cleanedData = data.replaceAll('(', '').replaceAll(')', '');
+
+    // Dividir los datos por la coma
+    if (cleanedData.contains(',')) {
+      List<String> parts = cleanedData.split(',');
       if (parts.length >= 2) {
         try {
+          // Asignar los valores a las variables correspondientes
           _errores = int.parse(parts[0].trim());
           _tiempoEjecucion = double.parse(parts[1].trim());
         } catch (e) {
