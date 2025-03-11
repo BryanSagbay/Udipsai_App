@@ -115,8 +115,13 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Image.asset(
-                'assets/images/definilylogo.png',
-                height: 280,
+                'assets/images/udipsai.png',
+                height: 45,
+              ),
+              SizedBox(width: 25),
+              Image.asset(
+                'assets/images/ucacuelogo.png',
+                height: 45,
               ),
             ],
           ),

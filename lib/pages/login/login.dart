@@ -53,12 +53,12 @@ class LoginPage extends StatelessWidget {
                 const SizedBox(height: 50),
 
                 Image.asset(
-                  'assets/images/ucacue.png',
-                  height: 120,
-                  width: 100,
+                  'assets/images/inlculab-provisional.png',
+                  height: 150,
+                  width: 250,
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 1),
 
                 // texto de bienvenida
                 Text(
@@ -148,8 +148,19 @@ class LoginPage extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                   ],
-                )
+                ),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children:[
+                    Image.asset(
+                      'assets/images/ucacue.png',
+                      height: 130,
+                      width: 180, // Ajusta el ancho para que ambas imágenes encajen bien
+                    ),
+                  ]
+                ),
               ],
             ),
           ),

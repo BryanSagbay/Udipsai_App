@@ -111,8 +111,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: Row(
           children: [
             Image.asset(
-              'assets/images/definilylogo.png',
-              height: 230,
+              'assets/images/ucacuelogo.png',
+              height: 42,
+            ),
+            SizedBox(width: 20),
+            Image.asset(
+              'assets/images/udipsai.png',
+              height: 45,
             ),
             SizedBox(width: 20),
             Spacer(),
