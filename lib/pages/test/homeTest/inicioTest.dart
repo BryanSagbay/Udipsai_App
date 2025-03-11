@@ -25,6 +25,13 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
   late AnimationController _controller;
   late Animation<Offset> _animation;
 
+  // Variable para controlar si los botones están habilitados
+  bool _buttonsEnabled = true;
+  // Variable para controlar qué MAC está actualmente en proceso
+  String? _processingMac;
+  // Controlar si hay un diálogo visible
+  bool _isDialogVisible = false;
+
   final List<Map<String, dynamic>> _devices = [
     {"mac": "98:D3:71:FD:80:8B", "screen": (BluetoothService service, String mac) => Monotonia(bluetoothService: service, macAddress: mac)},
     {"mac": "98:D3:31:F6:5D:9D", "screen": (BluetoothService service, String mac) => TestRiel(bluetoothService: service, macAddress: mac)},
@@ -61,37 +68,189 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  Future<void> _connectToDevice(String macAddress, String audioPath) async {
-    var device = _devices.firstWhere((device) => device["mac"] == macAddress, orElse: () => {});
-    if (device.isNotEmpty) {
-      bool connected = await _bluetoothService.connectToDevice(macAddress);
-      if (connected) {
-        setState(() {
-          _isConnected = true;
-          _connectedDeviceAddress = macAddress;
-        });
-        await _playAudio(audioPath);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => device["screen"](_bluetoothService, macAddress)),
-        ).then((_) {
-          // Eliminar esta desconexión automática
+  // Función para mostrar el diálogo de espera
+  void _showConnectionDialog(String testName) {
+    if (!mounted) return;
+
+    // Asegurarnos de que solo haya un diálogo visible a la vez
+    if (_isDialogVisible) return;
+
+    setState(() {
+      _isDialogVisible = true;
+    });
+
+    // Usar Future.microtask para asegurar que el diálogo se muestre
+    Future.microtask(() {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return WillPopScope(
+            onWillPop: () async => false, // Prevenir cierre con botón atrás
+            child: AlertDialog(
+              title: Text("Conectando"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Estableciendo conexión con el dispositivo de $testName..."),
+                  SizedBox(height: 20),
+                  CircularProgressIndicator(),
+                ],
+              ),
+            ),
+          );
+        },
+      ).then((_) {
+        // Cuando el diálogo se cierra, actualizar el estado
+        if (mounted) {
           setState(() {
-            _isConnected = false;
-            _connectedDeviceAddress = null;
+            _isDialogVisible = false;
           });
+        }
+      });
+    });
+  }
+
+  // Función para cerrar el diálogo de espera
+  void _closeConnectionDialog() {
+    if (!mounted) return;
+
+    if (_isDialogVisible) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  Future<void> _playErrorAudio() async {
+    try {
+      await _audioPlayer.play(AssetSource('audios/Error.mp3'));
+    } catch (e) {
+      print("Error reproduciendo audio: $e");
+    }
+  }
+
+  Future<void> _connectToDevice(String macAddress, String audioPath, String testName) async {
+    // Si los botones están deshabilitados o ya hay una conexión en proceso, no hacer nada
+    if (!_buttonsEnabled || _processingMac != null) {
+      return;
+    }
+
+    // Deshabilitar botones y establecer MAC en proceso
+    setState(() {
+      _buttonsEnabled = false;
+      _processingMac = macAddress;
+    });
+
+    // Mostrar el diálogo de espera
+    _showConnectionDialog(testName);
+
+    // Importante: Usar Future.delayed para permitir que la UI se actualice
+    // antes de iniciar la operación de conexión Bluetooth que puede bloquear
+    await Future.delayed(Duration(milliseconds: 100));
+
+    try {
+      var device = _devices.firstWhere((device) => device["mac"] == macAddress, orElse: () => {});
+      if (device.isNotEmpty) {
+        // Usamos Future con timeout para evitar bloqueos prolongados
+        bool connected = false;
+        try {
+          connected = await _bluetoothService.connectToDevice(macAddress)
+              .timeout(Duration(seconds: 10), onTimeout: () {
+            throw TimeoutException("La conexión tardó demasiado tiempo");
+          });
+        } catch (e) {
+          print("Error de conexión: $e");
+          connected = false;
+        }
+
+        // Cerrar el diálogo de espera
+        _closeConnectionDialog();
+
+        if (connected) {
+          setState(() {
+            _isConnected = true;
+            _connectedDeviceAddress = macAddress;
+          });
+
+          await _playAudio(audioPath);
+
+          // Envolvemos el Navigator.push en un Future.delayed para permitir
+          // que el diálogo se cierre completamente primero
+          await Future.delayed(Duration(milliseconds: 300));
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => device["screen"](_bluetoothService, macAddress)),
+          ).then((_) {
+            if (mounted) {
+              setState(() {
+                _isConnected = false;
+                _connectedDeviceAddress = null;
+                _buttonsEnabled = true;  // Habilitar botones nuevamente
+                _processingMac = null;   // Limpiar MAC en proceso
+              });
+            }
+          });
+        } else {
+          // Si la conexión falló, reproducir audio de error
+          await _playErrorAudio();
+          // Mostrar mensaje de error
+          _showSnackBar("No se pudo conectar al dispositivo. Verifique que esté encendido y dentro del rango.", Colors.red);
+
+          if (mounted) {
+            setState(() {
+              _buttonsEnabled = true;
+              _processingMac = null;
+            });
+          }
+        }
+      } else {
+        // Cerrar diálogo y reproducir audio de error
+        _closeConnectionDialog();
+        await _playErrorAudio();
+        _showSnackBar("Dispositivo no encontrado en la lista", Colors.red);
+
+        if (mounted) {
+          setState(() {
+            _buttonsEnabled = true;
+            _processingMac = null;
+          });
+        }
+      }
+    } catch (e) {
+      // Manejar cualquier excepción durante el proceso
+      print("Error en _connectToDevice: $e");
+      _closeConnectionDialog();
+      await _playErrorAudio();
+      _showSnackBar("Error de conexión: ${e.toString()}", Colors.red);
+
+      if (mounted) {
+        setState(() {
+          _buttonsEnabled = true;
+          _processingMac = null;
         });
       }
     }
   }
 
   Future<void> _playAudio(String audioPath) async {
-    await _audioPlayer.play(AssetSource(audioPath));
+    try {
+      await _audioPlayer.play(AssetSource(audioPath));
+    } catch (e) {
+      print("Error reproduciendo audio: $e");
+    }
   }
 
   void _showSnackBar(String message, Color backgroundColor) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 
@@ -226,53 +385,72 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildTestButton(String text, String imagePath, String macAddress, String audioPath) {
-    return GestureDetector(
-      onTap: () async {
-        await _connectToDevice(macAddress, audioPath);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white70,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Expansión del texto
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(64.0), // Espaciado alrededor del texto
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+    // Verificar si este botón específico está siendo procesado
+    bool isProcessing = _processingMac == macAddress;
+    // Calcular opacidad para indicar visualmente el estado del botón
+    double opacity = (_buttonsEnabled && !isProcessing) ? 1.0 : 0.5;
+
+    return Opacity(
+      opacity: opacity,
+      child: GestureDetector(
+        onTap: (_buttonsEnabled && !isProcessing)
+            ? () async {
+          await _connectToDevice(macAddress, audioPath, text);
+        }
+            : null, // Si los botones están deshabilitados, no hacer nada al tocar
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white70,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Expansión del texto
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(64.0), // Espaciado alrededor del texto
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis, // Maneja el desbordamiento del texto si es necesario
                   ),
-                  overflow: TextOverflow.ellipsis, // Maneja el desbordamiento del texto si es necesario
                 ),
               ),
-            ),
-            // Imagen a la derecha
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.scaleDown,
-                height: 180, // Ajusta la altura según lo que necesites
-                width: 180,  // Ajusta el tamaño de la imagen
+              // Imagen a la derecha
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.scaleDown,
+                  height: 180, // Ajusta la altura según lo que necesites
+                  width: 180,  // Ajusta el tamaño de la imagen
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+// Clase para manejar excepciones de timeout
+class TimeoutException implements Exception {
+  final String message;
+  TimeoutException(this.message);
+
+  @override
+  String toString() => message;
 }
