@@ -17,11 +17,15 @@ class TestPalanca extends StatefulWidget {
 
 class _TestPalancaPageState extends State<TestPalanca> {
   String _receivedData = "";
+  int _errores = 0;
+  double _tiempoEjecucion = 0.0;
   bool _isButton1Enabled = false;
+  bool _testCompleted = false;
   double leftColumnWidth = 0.4; // Personalizable
   double rightColumnWidth = 0.6; // Personalizable
   double cardHeight = 400; // Personalizable
   bool _isLoading = false; // Para controlar la animación de carga
+  bool _isWaiting = true; // Para mostrar la animación de espera inicial
 
   @override
   void initState() {
@@ -30,11 +34,29 @@ class _TestPalancaPageState extends State<TestPalanca> {
       print("Datos recibidos: $data");  // Verifica si los datos están siendo recibidos
       setState(() {
         if (data.isNotEmpty) {
-          _receivedData = data; // Ahora reemplaza en vez de concatenar
+          _receivedData = data; // Guardar los datos completos
+          _processReceivedData(data); // Procesar los datos
           _isLoading = false; // Detener la animación cuando llegan datos
+          _isWaiting = false; // Ya no está esperando
+          _testCompleted = true; // Test completado
         }
       });
     };
+  }
+
+  // Método para procesar los datos recibidos separados por coma
+  void _processReceivedData(String data) {
+    if (data.contains(',')) {
+      List<String> parts = data.split(',');
+      if (parts.length >= 2) {
+        try {
+          _errores = int.parse(parts[0].trim());
+          _tiempoEjecucion = double.parse(parts[1].trim());
+        } catch (e) {
+          print("Error al parsear los datos: $e");
+        }
+      }
+    }
   }
 
   @override
@@ -48,6 +70,8 @@ class _TestPalancaPageState extends State<TestPalanca> {
     if (_isButton1Enabled) {
       setState(() {
         _isLoading = true; // Activar la animación de carga
+        _isWaiting = false; // Ya no está esperando
+        _testCompleted = false; // Reiniciar el estado de test completado
       });
       widget.bluetoothService.sendData('M1');
     }
@@ -65,7 +89,11 @@ class _TestPalancaPageState extends State<TestPalanca> {
     setState(() {
       _isButton1Enabled = false;
       _receivedData = "";
+      _errores = 0;
+      _tiempoEjecucion = 0.0;
       _isLoading = false; // Detener animación en el reset
+      _isWaiting = true; // Volver a mostrar la animación de espera
+      _testCompleted = false; // Reiniciar el estado de test completado
     });
   }
 
@@ -155,22 +183,7 @@ class _TestPalancaPageState extends State<TestPalanca> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(18.0),
-                        child: _isLoading
-                            ? _buildLoadingAnimation()
-                            : SingleChildScrollView(
-                          child: Center(
-                            child: Text(
-                              _receivedData.isNotEmpty
-                                  ? _receivedData
-                                  : "Esperando que se inicie el test...",
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87, // Color oscuro para el texto
-                              ),
-                            ),
-                          ),
-                        ),
+                        child: _getCardContent(),
                       ),
                     ),
                   ),
@@ -203,6 +216,32 @@ class _TestPalancaPageState extends State<TestPalanca> {
     );
   }
 
+  // Método para determinar qué contenido mostrar en la tarjeta
+  Widget _getCardContent() {
+    if (_isLoading) {
+      return _buildLoadingAnimation();
+    } else if (_isWaiting) {
+      return _buildWaitingAnimation();
+    } else if (_testCompleted) {
+      return _buildCompletedTest();
+    } else {
+      return SingleChildScrollView(
+        child: Center(
+          child: Text(
+            _receivedData.isNotEmpty
+                ? _receivedData
+                : "Esperando que se inicie el test...",
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87, // Color oscuro para el texto
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   // Widget para la animación de carga
   Widget _buildLoadingAnimation() {
     return Column(
@@ -229,6 +268,141 @@ class _TestPalancaPageState extends State<TestPalanca> {
         CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
         ),
+      ],
+    );
+  }
+
+  // Widget para la animación de espera inicial
+  Widget _buildWaitingAnimation() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Puedes usar un icono animado o Lottie Animation
+        Container(
+          height: 120,
+          width: 120,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.hourglass_empty,
+            size: 80,
+            color: Colors.orange,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          "Esperando que se inicie el test...",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade700,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        // Puedes agregar una animación pulsante aquí
+        Container(
+          width: 200,
+          height: 10,
+          decoration: BoxDecoration(
+            color: Colors.orange.shade300,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const LinearProgressIndicator(
+            backgroundColor: Colors.transparent,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget para mostrar los resultados del test completado
+  Widget _buildCompletedTest() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 10),
+        Card(
+          elevation: 3,
+          color: Colors.blue.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Errores: $_errores",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.timer, color: Colors.blue.shade700, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Tiempo de ejecución: $_tiempoEjecucion",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        // Animación de test finalizado
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.green.shade100,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade500,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Test Finalizado",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade800,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
       ],
     );
   }

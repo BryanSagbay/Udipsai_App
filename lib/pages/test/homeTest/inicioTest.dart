@@ -275,12 +275,12 @@ class _TestPageState extends State<TestPage> with SingleTickerProviderStateMixin
             children: [
               Image.asset(
                 'assets/images/ucacuelogo.png',
-                height: 45,
+                height: 40,
               ),
               SizedBox(width: 25),
               Image.asset(
                 'assets/images/udipsai.png',
-                height: 45,
+                height: 40,
               ),
             ],
           ),
