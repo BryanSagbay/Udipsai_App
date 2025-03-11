@@ -160,12 +160,12 @@ class _TestRielState extends State<TestRiel> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _areButtonsEnabled
+        onPressed: _isPlayPressed // Aquí es cuando se habilitan los botones
             ? () {
           _sendBluetoothMessage(message);
           print("$text presionado");
         }
-            : null,
+            : null, // Si no está habilitado, no hace nada
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           padding: EdgeInsets.symmetric(vertical: 16),

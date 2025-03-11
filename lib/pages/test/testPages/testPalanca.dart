@@ -82,29 +82,37 @@ class _TestPalancaPageState extends State<TestPalanca> {
         ),
         automaticallyImplyLeading: true,
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Para separar las imágenes y el texto
           children: [
-            Image.asset(
-              'assets/images/ucacuelogo.png',
-              height: 30, // Ajusta el tamaño del logo
+            Text(
+              'Test de Palanca',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(width: 8), // Espaciado entre imágenes
-            Image.asset(
-              'assets/images/udipsai.png', // Nueva imagen
-              height: 30, // Ajusta el tamaño
-            ),
-            const SizedBox(width: 16), // Más espacio antes del texto
-            const Text(
-              "Monotonía M1",
-              style: TextStyle(color: Colors.white),
+            Row(
+              children: [
+                Image.asset(
+                  'assets/images/ucacuelogo.png',
+                  height: 45,
+                ),
+                SizedBox(width: 25),
+                Image.asset(
+                  'assets/images/udipsai.png',
+                  height: 45,
+                ),
+              ],
             ),
           ],
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/ofertafond.jpg'), // Fondo
+            image: AssetImage('assets/images/ofertafond.jpg'), // Fondo con un rojo más suave
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.red.shade300.withOpacity(0.5), BlendMode.darken), // Fondo más suave
           ),
         ),
         child: Padding(
@@ -120,7 +128,7 @@ class _TestPalancaPageState extends State<TestPalanca> {
                     child: ElevatedButton(
                       onPressed: _isButton1Enabled ? _sendM1Command : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Colors.grey.shade800, // Azul más suave
                         padding: const EdgeInsets.symmetric(vertical: 15),
                       ),
                       child: const Text(
@@ -140,6 +148,7 @@ class _TestPalancaPageState extends State<TestPalanca> {
                     width: double.infinity,
                     height: cardHeight,
                     child: Card(
+                      color: Colors.white70,
                       elevation: 5,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -153,10 +162,11 @@ class _TestPalancaPageState extends State<TestPalanca> {
                             child: Text(
                               _receivedData.isNotEmpty
                                   ? _receivedData
-                                  : "Esperando datos del dispositivo...",
+                                  : "Esperando que se inicie el test...",
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black87, // Color oscuro para el texto
                               ),
                             ),
                           ),
@@ -173,17 +183,17 @@ class _TestPalancaPageState extends State<TestPalanca> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const SizedBox(width: 30), // Para mover los botones a la izquierda
+          const SizedBox(width: 30),
           FloatingActionButton(
             onPressed: _toggleStart,
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.green.shade600, // Azul para el botón
             child: const Icon(Icons.play_arrow),
           ),
           if (_isButton1Enabled) ...[
             const SizedBox(width: 10),
             FloatingActionButton(
               onPressed: _reset,
-              backgroundColor: Colors.yellow,
+              backgroundColor: Colors.orange, // Naranja para el botón de reset
               tooltip: 'Reiniciar y enviar S',
               child: const Icon(Icons.refresh),
             ),
