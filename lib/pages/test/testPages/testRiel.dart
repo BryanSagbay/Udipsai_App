@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:hc05_udipsai/services/bluetoothService.dart';
 
@@ -14,33 +12,73 @@ class TestRiel extends StatefulWidget {
   });
 
   @override
-  _TestRielState createState() => _TestRielState();
+  State<TestRiel> createState() => _TestRielPageState();
 }
 
-class _TestRielState extends State<TestRiel> {
-  String _receivedData = '';
-  bool _areButtonsEnabled = false;
-  bool _isPlayPressed = false;
+class _TestRielPageState extends State<TestRiel> {
+  String _receivedData = "";
+  int _errores = 0;
+  double _tiempoEjecucion = 0.0;
+  bool _isButton1Enabled = false;
+  bool _testCompleted = false;
+  double leftColumnWidth = 0.4; // Personalizable
+  double rightColumnWidth = 0.6; // Personalizable
+  double cardHeight = 400; // Personalizable
+  bool _isLoading = false; // Para controlar la animación de carga
+  bool _isWaiting = true; // Para mostrar la animación de espera inicial
 
   @override
   void initState() {
     super.initState();
-
-    // Configurar el callback para recibir datos
     widget.bluetoothService.onDataReceivedCallback = (String data) {
+      print("Datos recibidos: $data");  // Verifica si los datos están siendo recibidos
       setState(() {
-        _receivedData += data;
+        if (data.isNotEmpty) {
+          _receivedData = data; // Guardar los datos completos
+          _processReceivedData(data); // Procesar los datos
+          _isLoading = false; // Detener la animación cuando llegan datos
+          _isWaiting = false; // Ya no está esperando
+          _testCompleted = true; // Test completado
+        }
       });
     };
   }
 
-  String _formatData(Uint8List data) {
-    // Convertir los bytes en su representación binaria (0s y 1s)
-    String binaryString = data.map((byte) {
-      return byte.toRadixString(2).padLeft(8, '0'); // Convertir a binario y asegurarse de tener 8 bits
-    }).join(' '); // Unir los bytes como cadenas separadas por espacios
+  // Método para procesar los datos recibidos separados por coma
+  String _buffer = "";  // Acumulador de datos
 
-    return binaryString;
+  void _processReceivedData(String data) {
+    _buffer += data;  // Acumula los fragmentos
+
+    if (_buffer.contains("\n")) { // Suponiendo que los datos terminan con un salto de línea
+      List<String> messages = _buffer.split("\n");
+      for (int i = 0; i < messages.length - 1; i++) {  // Procesamos todas las líneas completas
+        _parseData(messages[i].trim());
+      }
+      _buffer = messages.last;  // Dejamos el último fragmento incompleto (si existe)
+    }
+  }
+
+  void _parseData(String data) {
+    if (data.contains(',')) {
+      List<String> parts = data.split(',');
+
+      if (parts.length >= 2) {
+        String erroresStr = parts[0].trim();
+        String tiempoStr = parts[1].trim();
+
+        try {
+          _errores = erroresStr.isEmpty ? 0 : int.parse(erroresStr);
+          _tiempoEjecucion = double.parse(tiempoStr);
+
+          print("Datos procesados correctamente: Errores=$_errores, Tiempo=$_tiempoEjecucion");
+        } catch (e) {
+          print("Error al parsear los datos: $e");
+        }
+      } else {
+        print("Datos inválidos recibidos: '$data'");
+      }
+    }
   }
 
   @override
@@ -50,131 +88,344 @@ class _TestRielState extends State<TestRiel> {
     super.dispose();
   }
 
-  // Función para habilitar los botones
-  void _enableButtons() {
-    setState(() {
-      _isPlayPressed = true;
-      _areButtonsEnabled = true;
-    });
-  }
-
-  // Función para cancelar (envía 'S' al Bluetooth y desactiva los botones)
-  void _cancel() {
-    widget.bluetoothService.sendData('S').then((_) {
-      print("Comando 'S' enviado correctamente");
-    }).catchError((error) {
-      print("Error al enviar 'S': $error");
-    });
-    setState(() {
-      _isPlayPressed = false;
-      _areButtonsEnabled = false;
-      _receivedData = ""; // Limpiar los datos recibidos
-    });
-  }
-
-  // Enviar mensaje al Bluetooth
-  void _sendBluetoothMessage(String message) {
-    try {
-      widget.bluetoothService.sendData(message);
-      print("Mensaje '$message' enviado correctamente");
-    } catch (error) {
-      print("Error al enviar '$message': $error");
+  void _sendM1Command() {
+    if (_isButton1Enabled) {
+      setState(() {
+        _isLoading = true; // Activar la animación de carga
+        _isWaiting = false; // Ya no está esperando
+        _testCompleted = false; // Reiniciar el estado de test completado
+      });
+      widget.bluetoothService.sendData('M1');
     }
+  }
+
+  void _toggleStart() {
+    setState(() {
+      _isButton1Enabled = true;
+    });
+  }
+
+  void _reset() {
+    widget.bluetoothService.sendData('S');
+
+    setState(() {
+      _isButton1Enabled = false;
+      _receivedData = "";
+      _errores = 0;
+      _tiempoEjecucion = 0.0;
+      _isLoading = false; // Detener animación en el reset
+      _isWaiting = true; // Volver a mostrar la animación de espera
+      _testCompleted = false; // Reiniciar el estado de test completado
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Test del Riel"),
-        backgroundColor: Colors.blue,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
+        backgroundColor: Colors.black87,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        automaticallyImplyLeading: true,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Para separar las imágenes y el texto
           children: [
-            // Primera columna (Botones)
-            Expanded(
-              flex: 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Botón Play que habilita los botones
-                  FloatingActionButton(
-                    onPressed: _enableButtons,
-                    backgroundColor: Colors.blue,
-                    child: Icon(Icons.play_arrow),
-                  ),
-                  SizedBox(height: 20),
-                  // Botones para enviar mensajes al Bluetooth
-                  _buildButton("Trayectoria 1", Colors.blue, "M1"),
-                  SizedBox(height: 10),
-                  _buildButton("Trayectoria 2", Colors.red, "M1"),
-                  SizedBox(height: 10),
-                  _buildButton("Trayectoria 3", Colors.green, "M1"),
-                  SizedBox(height: 20),
-                  // Botón Cancelar que envía 'S' y limpia la pantalla
-                  if (_isPlayPressed)
-                    FloatingActionButton(
-                      onPressed: _cancel,
-                      backgroundColor: Colors.yellow,
-                      child: Icon(Icons.restart_alt),
-                    ),
-                ],
+            Text(
+              'Sistema de Motrocidad',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(width: 20), // Espaciado entre columnas
-            // Segunda columna (Card con los resultados)
-            Expanded(
-              flex: 2,
-              child: Card(
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+            Row(
+              children: [
+                Image.asset(
+                  'assets/images/ucacuelogo.png',
+                  height: 45,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        _receivedData.isNotEmpty
-                            ? _receivedData
-                            : "Esperando datos...",
-                        style: TextStyle(
-                            fontSize: 16, fontFamily: 'Courier'
-                        ),
+                SizedBox(width: 25),
+                Image.asset(
+                  'assets/images/udipsai.png',
+                  height: 45,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/ofertafond.jpg'), // Fondo con un rojo más suave
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.red.shade300.withOpacity(0.5), BlendMode.darken), // Fondo más suave
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Row(
+            children: [
+              // Lado izquierdo - Botón Enviar M1
+              Expanded(
+                flex: (leftColumnWidth * 10).toInt(),
+                child: Center(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isButton1Enabled ? _sendM1Command : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade800, // Azul más suave
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      child: const Text(
+                        "Enviar M1",
+                        style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 20),
+              // Lado derecho - Card con respuesta del Bluetooth
+              Expanded(
+                flex: (rightColumnWidth * 10).toInt(),
+                child: Center(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: cardHeight,
+                    child: Card(
+                      color: Colors.white70,
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18.0),
+                        child: _getCardContent(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(width: 30),
+          FloatingActionButton(
+            onPressed: _toggleStart,
+            backgroundColor: Colors.green.shade600, // Azul para el botón
+            child: const Icon(Icons.play_arrow),
+          ),
+          if (_isButton1Enabled) ...[
+            const SizedBox(width: 10),
+            FloatingActionButton(
+              onPressed: _reset,
+              backgroundColor: Colors.orange, // Naranja para el botón de reset
+              tooltip: 'Reiniciar y enviar S',
+              child: const Icon(Icons.refresh),
+            ),
+          ]
+        ],
       ),
     );
   }
 
-  // Método para construir los botones con la funcionalidad de Bluetooth
-  Widget _buildButton(String text, Color color, String message) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isPlayPressed // Aquí es cuando se habilitan los botones
-            ? () {
-          _sendBluetoothMessage(message);
-          print("$text presionado");
-        }
-            : null, // Si no está habilitado, no hace nada
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  // Método para determinar qué contenido mostrar en la tarjeta
+  Widget _getCardContent() {
+    if (_isLoading) {
+      return _buildLoadingAnimation();
+    } else if (_isWaiting) {
+      return _buildWaitingAnimation();
+    } else if (_testCompleted) {
+      return _buildCompletedTest();
+    } else {
+      return SingleChildScrollView(
+        child: Center(
+          child: Text(
+            _receivedData.isNotEmpty
+                ? _receivedData
+                : "Esperando que se inicie el test...",
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87, // Color oscuro para el texto
+            ),
           ),
         ),
-        child: Text(text, style: TextStyle(fontSize: 18, color: Colors.white)),
-      ),
+      );
+    }
+  }
+
+  // Widget para la animación de carga
+  Widget _buildLoadingAnimation() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const CircleAvatar(
+          radius: 50,
+          backgroundColor: Colors.blue,
+          child: Icon(
+            Icons.gamepad,
+            size: 60,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          "Procesando test...",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 20),
+        CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
+        ),
+      ],
+    );
+  }
+
+  // Widget para la animación de espera inicial
+  Widget _buildWaitingAnimation() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Puedes usar un icono animado o Lottie Animation
+        Container(
+          height: 120,
+          width: 120,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.hourglass_empty,
+            size: 80,
+            color: Colors.orange,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          "Esperando que se inicie el test...",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade700,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        // Puedes agregar una animación pulsante aquí
+        Container(
+          width: 200,
+          height: 10,
+          decoration: BoxDecoration(
+            color: Colors.orange.shade300,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const LinearProgressIndicator(
+            backgroundColor: Colors.transparent,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget para mostrar los resultados del test completado
+  Widget _buildCompletedTest() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 10),
+        Card(
+          elevation: 3,
+          color: Colors.blue.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Errores: $_errores",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.timer, color: Colors.blue.shade700, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Tiempo de ejecución: $_tiempoEjecucion",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        // Animación de test finalizado
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.green.shade100,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade500,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Test Finalizado",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade800,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+      ],
     );
   }
 }
